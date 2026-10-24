@@ -15,7 +15,7 @@ router.get('/health', (req, res) => {
   res.json({
     success: true,
     status: 'healthy',
-    service: 'LocalLoop Express REST API',
+    service: 'OneMarket Express REST API',
     version: '1.0.0',
     uptime: Math.floor(process.uptime()),
     timestamp: new Date().toISOString()

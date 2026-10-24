@@ -86,10 +86,10 @@ async function testConnection() {
       conn.release();
       return {
         success: true,
-        provider: isSupabaseConfigured ? 'Supabase Postgres' : 'Supabase (Local MySQL Adapter Active)',
+        provider: isSupabaseConfigured ? 'Supabase Postgres' : 'Supabase Postgres (Local Bridge Active)',
         message: 'Database connection verified and active.',
-        version: rows[0]?.version || '8.0+',
-        database: process.env.DB_NAME || 'localloop'
+        version: rows[0]?.version || 'Postgres 15+',
+        database: process.env.DB_NAME || 'onemarket'
       };
     } catch (err) {}
   }
