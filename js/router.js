@@ -18,7 +18,9 @@ const Router = {
     'admin': AdminView,
     'store': StorefrontView,
     'shop': StorefrontView,
-    'about': AboutView
+    'about': AboutView,
+    'inquiry': InquiryView,
+    'contact': InquiryView
   },
 
   parseHash() {
@@ -118,6 +120,12 @@ const Router = {
       case 'about':
         viewHtml = AboutView.render();
         initCallback = () => AboutView.initListeners();
+        break;
+
+      case 'inquiry':
+      case 'contact':
+        viewHtml = InquiryView.render(queryParams);
+        initCallback = () => InquiryView.initListeners();
         break;
 
       case 'home':

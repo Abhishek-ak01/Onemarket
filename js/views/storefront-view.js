@@ -56,6 +56,9 @@ const StorefrontView = {
                   </span>
                   ${shop.timing ? `<span class="storefront-pill">🕒 ${Utils.escapeHTML(shop.timing)}</span>` : ''}
                   ${shop.phone ? `<span class="storefront-pill">📞 ${Utils.escapeHTML(shop.phone)}</span>` : ''}
+                  <a href="#inquiry?shop_id=${encodeURIComponent(shop.id)}&subject=${encodeURIComponent('Inquiry for ' + shop.name)}" class="storefront-pill" style="background: rgba(255,255,255,0.3); color: #fff; text-decoration: none; font-weight: 700;">
+                    ✉️ Inquire with Merchant
+                  </a>
                 </div>
               </div>
 

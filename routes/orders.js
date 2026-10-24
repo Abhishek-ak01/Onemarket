@@ -6,6 +6,7 @@
 const express = require('express');
 const router = express.Router();
 const db = require('../config/db');
+const { syncToSupabase } = require('../config/supabase');
 const { optionalAuth } = require('../middleware/auth');
 
 /**
@@ -414,6 +415,48 @@ router.post('/', optionalAuth, async (req, res, next) => {
     // 11. Commit transaction
     await connection.commit();
 
+    // Sync newly created order and line items directly to Supabase
+    await syncToSupabase('orders', 'insert', {
+      id: orderId,
+      user_id: finalUserId,
+      customer_name: customer.name.trim(),
+      customer_phone: cleanPhone,
+      customer_address: finalAddress,
+      delivery_preference: deliveryPref,
+      payment_method: finalPayMethod,
+      payment_status: finalPayStatus,
+      notes: finalNotes,
+      subtotal: subtotal,
+      delivery_fee: deliveryFee,
+      taxes: taxes,
+      total: total,
+      tokens_earned: tokensEarned,
+      tokens_redeemed: tokensRedeemed,
+      token_discount: tokenDiscount,
+      status: 'Pending'
+    });
+
+    const sbItems = validatedItems.map(it => ({
+      order_id: orderId,
+      product_id: it.productId,
+      image: it.image,
+      name: it.name,
+      category: it.category,
+      price: it.price,
+      original_price: it.originalPrice,
+      discount: it.discount,
+      quantity: it.quantity,
+      shop_id: it.shopId,
+      shop_name: it.shopName
+    }));
+    await syncToSupabase('order_items', 'insert', sbItems);
+
+    await syncToSupabase('order_status_history', 'insert', {
+      order_id: orderId,
+      status: 'Pending',
+      note: `Order request placed with ${finalPayMethod}.`
+    });
+
     // 12. Fetch complete created order
     const [createdOrder] = await db.query('SELECT * FROM orders WHERE id = ?', [orderId]);
     const [formatted] = await populateOrderDetails([createdOrder]);
@@ -530,6 +573,13 @@ async function processOrderStatusUpdate(orderId, status, note, reason, user) {
     );
 
     await connection.commit();
+
+    await syncToSupabase('orders', 'update', { status, updated_at: new Date().toISOString() }, 'id', orderId);
+    await syncToSupabase('order_status_history', 'insert', {
+      order_id: orderId,
+      status,
+      note: auditNote
+    });
 
     const [updated] = await db.query('SELECT * FROM orders WHERE id = ?', [orderId]);
     const [formatted] = await populateOrderDetails([updated]);

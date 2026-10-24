@@ -1,0 +1,12 @@
+INSERT INTO users (id, name, email, phone, password_hash, role, shop_id, address, city, pincode, reward_tokens, status) VALUES
+('user-cust-1', 'Aditi Rao', 'customer@localloop.in', '+91 98450 12345', '$2b$10$6GBvADCpo8LHv4G2pK49yeb9CTCftTc5UX.2nVLYjxs/GW6GRaAL.', 'customer', NULL, 'Flat 402, Green Palms Apts, 100ft Road, Indiranagar', 'Bengaluru', '560038', 45, 'active'),
+('user-cust-2', 'Rohan Mehra', 'rohan@localloop.in', '+91 98802 99881', '$2b$10$6GBvADCpo8LHv4G2pK49yeb9CTCftTc5UX.2nVLYjxs/GW6GRaAL.', 'customer', NULL, 'Villa 18, Koramangala 4th Block', 'Bengaluru', '560034', 0, 'active'),
+('user-sell-1', 'Narayanan Nambiar', 'seller@malabarspices.in', '+91 98451 22345', '$2b$10$6GBvADCpo8LHv4G2pK49yeHvKWvnYjMkSl2C2WbEty5MvYAg6vcUO', 'seller', 'shop-1', '100 Feet Road, 12th Main, Indiranagar', 'Bengaluru', '560038', 20, 'active'),
+('user-sell-2', 'Vikramaditya Hegde', 'seller@apextech.in', '+91 98802 33411', '$2b$10$6GBvADCpo8LHv4G2pK49yeHvKWvnYjMkSl2C2WbEty5MvYAg6vcUO', 'seller', 'shop-2', '5th Block, Sony World Junction, Koramangala', 'Bengaluru', '560034', 0, 'active'),
+('user-sell-3', 'Ananya Sharma', 'seller@voguecraft.in', '+91 97412 88902', '$2b$10$6GBvADCpo8LHv4G2pK49yeHvKWvnYjMkSl2C2WbEty5MvYAg6vcUO', 'seller', 'shop-3', '8th Cross, Margosa Road, Malleshwaram', 'Bengaluru', '560003', 0, 'active'),
+('user-sell-4', 'Murali Krishna', 'seller@saraswatibooks.in', '+91 98440 11988', '$2b$10$6GBvADCpo8LHv4G2pK49yeHvKWvnYjMkSl2C2WbEty5MvYAg6vcUO', 'seller', 'shop-4', '4th Block, Near Jayanagar BDA Complex', 'Bengaluru', '560011', 0, 'active'),
+('user-sell-5', 'Sunita Reddy', 'seller@prakritihome.in', '+91 99003 44521', '$2b$10$6GBvADCpo8LHv4G2pK49yeHvKWvnYjMkSl2C2WbEty5MvYAg6vcUO', 'seller', 'shop-5', 'Sector 2, 27th Main, HSR Layout', 'Bengaluru', '560102', 0, 'active'),
+('user-sell-6', 'Dr. Meenakshi Iyer', 'seller@vedabotanics.in', '+91 96118 77203', '$2b$10$6GBvADCpo8LHv4G2pK49yeHvKWvnYjMkSl2C2WbEty5MvYAg6vcUO', 'seller', 'shop-6', '12th Main Road, HAL 2nd Stage, Indiranagar', 'Bengaluru', '560038', 0, 'active'),
+('user-sell-7', 'Karthik Gowda', 'seller@decapulse.in', '+91 98860 45678', '$2b$10$6GBvADCpo8LHv4G2pK49yeHvKWvnYjMkSl2C2WbEty5MvYAg6vcUO', 'seller', 'shop-7', '80ft Road, 4th Block, Koramangala', 'Bengaluru', '560034', 0, 'active'),
+('user-admin-01', 'Platform Administrator', 'admin@onemarket.in', '+91 98765 00000', '$2b$10$bzGs.utq.RwSMjvTlGc68OiE.XvwUyfNNoiD.WppaW/COgTP6DFbu', 'admin', NULL, 'Marketplace Headquarters, Station Road', 'Hubballi', '580020', 0, 'active')
+ON CONFLICT (id) DO NOTHING;

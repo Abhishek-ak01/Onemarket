@@ -222,6 +222,22 @@ CREATE TABLE IF NOT EXISTS admin_audit_logs (
 );
 CREATE INDEX IF NOT EXISTS idx_admin_audit_created ON admin_audit_logs(created_at);
 
+-- 14. Inquiries & Form Submissions
+CREATE TABLE IF NOT EXISTS inquiries (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(150) NOT NULL,
+    email VARCHAR(150) NOT NULL,
+    phone VARCHAR(30) DEFAULT NULL,
+    subject VARCHAR(200) DEFAULT NULL,
+    message TEXT NOT NULL,
+    shop_id VARCHAR(50) REFERENCES shops(id) ON DELETE SET NULL,
+    status VARCHAR(30) NOT NULL DEFAULT 'unread' CHECK (status IN ('unread', 'in_progress', 'resolved', 'archived')),
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS idx_inquiries_email ON inquiries(email);
+CREATE INDEX IF NOT EXISTS idx_inquiries_status ON inquiries(status);
+
 -- ============================================================================
 -- ROW LEVEL SECURITY (RLS) POLICIES
 -- ============================================================================
@@ -238,6 +254,7 @@ ALTER TABLE cart_items ENABLE ROW LEVEL SECURITY;
 ALTER TABLE reward_transactions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE payments ENABLE ROW LEVEL SECURITY;
 ALTER TABLE admin_audit_logs ENABLE ROW LEVEL SECURITY;
+ALTER TABLE inquiries ENABLE ROW LEVEL SECURITY;
 
 -- Public read for catalogue data
 CREATE POLICY "Public read for locations" ON locations FOR SELECT USING (true);
@@ -245,6 +262,8 @@ CREATE POLICY "Public read for categories" ON categories FOR SELECT USING (true)
 CREATE POLICY "Public read for shops" ON shops FOR SELECT USING (true);
 CREATE POLICY "Public read for active products" ON products FOR SELECT USING (is_active = true AND moderation_status = 'approved');
 CREATE POLICY "Public read for reviews" ON reviews FOR SELECT USING (true);
+CREATE POLICY "Public insert for inquiries" ON inquiries FOR INSERT WITH CHECK (true);
+CREATE POLICY "Public select own inquiries" ON inquiries FOR SELECT USING (true);
 
 -- User scoped policies
 CREATE POLICY "Users view own profile" ON users FOR SELECT USING (auth.uid()::text = id OR role = 'admin');

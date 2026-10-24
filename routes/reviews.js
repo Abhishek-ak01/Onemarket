@@ -5,6 +5,7 @@
 
 const express = require('express');
 const { query } = require('../config/db');
+const { syncToSupabase } = require('../config/supabase');
 const { requireAuth } = require('../middleware/auth');
 
 const router = express.Router();
@@ -99,6 +100,15 @@ router.post('/', requireAuth, async (req, res, next) => {
       INSERT INTO reviews (product_id, user_id, customer_name, rating, comment, is_verified_purchase)
       VALUES (?, ?, ?, ?, ?, 1)
     `, [targetProdId, req.user.id, req.user.name, numRating, comment.trim()]);
+
+    await syncToSupabase('reviews', 'insert', {
+      product_id: targetProdId,
+      user_id: req.user.id,
+      customer_name: req.user.name || 'Verified Customer',
+      rating: numRating,
+      comment: comment.trim(),
+      is_verified_purchase: true
+    });
 
     // Recalculate product rating
     const statsRows = await query(`

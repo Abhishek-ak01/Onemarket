@@ -249,8 +249,27 @@ async function runBackendTests() {
     }
     console.log(`  ✓ Stock restored on cancellation: ${cancelStockBefore} → ${cancelStockAfter} units.`);
 
+    // 16. Customer & Merchant Inquiries (Supabase Backend)
+    console.log('Test 16: Inquiries endpoint (Supabase backend)...');
+    const inqPost = await post('/api/inquiries', {
+      name: 'Automated Test User',
+      email: 'test.suite@onemarket.in',
+      phone: '+91 99000 88776',
+      subject: 'Inquiry Verification Test',
+      message: 'Automated verification test for Supabase backend inquiry recording.',
+      shopId: 'shop-1'
+    });
+    if (inqPost.status !== 201 || !inqPost.data.success || !inqPost.data.data?.id) {
+      throw new Error('Failed: Submitting inquiry to Supabase backend failed');
+    }
+    const inqList = await get('/api/inquiries');
+    if (inqList.status !== 200 || !Array.isArray(inqList.data.data) || inqList.data.count < 1) {
+      throw new Error('Failed: Fetching inquiries failed');
+    }
+    console.log(`  ✓ Inquiry #${inqPost.data.data.id} recorded in Supabase backend (Total inquiries: ${inqList.data.count}).`);
+
     console.log('\n======================================================');
-    console.log('ALL 15 BACKEND REST API SUITES PASSED (100%)');
+    console.log('ALL 16 BACKEND REST API SUITES PASSED (100%)');
     console.log('======================================================\n');
   } finally {
     server.close();

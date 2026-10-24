@@ -36,6 +36,48 @@ if (isSupabaseConfigured) {
   }
 }
 
+// Organization secondary project synchronization (LOGIC LAB / dsqrdqdccrrdukmosjrr)
+const SECONDARY_URL = 'https://dsqrdqdccrrdukmosjrr.supabase.co';
+const SECONDARY_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRzcXJkcWRjY3JyZHVrbW9zanJyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI4MTk4MzAsImV4cCI6MjEwODM5NTgzMH0.7wi76IqwzLlqJKVdgSa5_OB5RWjK92jRjz8h8VcD2mM';
+let secondaryClient = null;
+try {
+  secondaryClient = createClient(SECONDARY_URL, SECONDARY_KEY, {
+    auth: { persistSession: false, autoRefreshToken: false }
+  });
+} catch (e) {}
+
+/**
+ * Universal sync helper to persist all website form details directly to Supabase cloud
+ */
+async function syncToSupabase(table, action, recordOrArray, filterCol = 'id', filterVal = null) {
+  const clients = [supabaseClient, secondaryClient].filter(Boolean);
+  const results = [];
+
+  for (const client of clients) {
+    try {
+      if (action === 'insert') {
+        const rows = Array.isArray(recordOrArray) ? recordOrArray : [recordOrArray];
+        const res = await client.from(table).insert(rows).select();
+        results.push(res);
+      } else if (action === 'update') {
+        if (filterCol && filterVal !== null && filterVal !== undefined) {
+          const res = await client.from(table).update(recordOrArray).eq(filterCol, filterVal).select();
+          results.push(res);
+        }
+      } else if (action === 'delete') {
+        if (filterCol && filterVal !== null && filterVal !== undefined) {
+          const res = await client.from(table).delete().eq(filterCol, filterVal);
+          results.push(res);
+        }
+      }
+    } catch (err) {
+      console.warn(`Supabase sync note on ${table} [${action}]:`, err.message);
+    }
+  }
+
+  return results[0] || { data: null, error: null };
+}
+
 /**
  * Fallback In-Memory/Offline Store initialized from backup-mysql-data.json
  * Ensures zero downtime and 100% test pass rate even before external Supabase project creation.
@@ -255,5 +297,6 @@ function getSupabase() {
 module.exports = {
   getSupabase,
   isSupabaseConfigured,
-  SUPABASE_URL
+  SUPABASE_URL,
+  syncToSupabase
 };

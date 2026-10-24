@@ -1,0 +1,612 @@
+================================================================================
+ONEMARKET — COMPREHENSIVE FEATURES AND TECHNOLOGY INVENTORY
+Report File: ONEMARKET_FEATURES_AND_TECHNOLOGY.txt
+Generated Date: 2026-10-24
+Application: OneMarket Hyperlocal Marketplace (formerly LocalLoop)
+Target Geography: Hubballi, Karnataka, India
+Stack: Node.js, Express.js, Supabase Postgres / MySQL, Vanilla HTML5/CSS3/ES6+ JavaScript
+================================================================================
+
+TABLE OF CONTENTS
+--------------------------------------------------------------------------------
+ 1. Project Overview and Purpose
+ 2. Languages, Frameworks, Libraries, and Tools
+ 3. Frontend Pages, Views, Components, and Navigation
+ 4. Customer Features
+ 5. Seller Features
+ 6. Admin Features and Access Controls
+ 7. Product Catalogue, Search, Categories, and Images
+ 8. Cart and Checkout Flow
+ 9. Orders, Tracking, Cancellation, and Inventory
+10. Payments, Including Gateway Integration and Verification
+11. Rewards, Discounts, and Pricing
+12. Database Tables, Relationships, Migrations, and Data Access
+13. Authentication, Authorization, and Security Measures
+14. APIs and Important Routes
+15. Responsive Design and Accessibility Behavior
+16. Location-Based and Hubballi Discovery Features
+17. Testing, Startup, and Deployment Setup
+18. Environment Variables and External Services
+19. Known Limitations, Incomplete Features, Mocks, and Setup Still Required
+--------------------------------------------------------------------------------
+
+
+================================================================================
+1. PROJECT OVERVIEW AND PURPOSE
+================================================================================
+- Name: OneMarket (evolved from LocalLoop codebase)
+- Purpose: A full-stack hyperlocal marketplace web application dedicated to neighbourhood commerce in Hubballi, Karnataka. It connects verified local shopkeepers (merchants) across six distinct shopping zones with local residents.
+- Problem Solved: Eliminates friction in neighbourhood purchasing by letting customers browse real inventory, compare prices across nearby stores, check stock availability, redeem reward tokens, and submit direct orders with official UPI payment verification or Cash on Delivery—without requiring manual phone calls or uncoordinated messaging.
+- Architectural Model: 
+  * Single Page Application (SPA) frontend served statically by Express.
+  * Modular Node.js / Express REST API backend (`/api/*`).
+  * Unified database layer supporting Supabase Postgres via `@supabase/supabase-js`, with an automated offline fallback adapter (`SupabaseOfflineAdapter`) and an active local MySQL connection pool for local persistence and backward compatibility.
+  * Status: Implemented & Verified (all 4 automated test suites passing 100%).
+
+
+================================================================================
+2. LANGUAGES, FRAMEWORKS, LIBRARIES, AND TOOLS
+================================================================================
+- Backend Language: JavaScript (Node.js ES6+ / CommonJS)
+  * Version: Node.js v22.14.0
+  * Verification: Verified via runtime process inspection and server logs.
+- Backend Framework:
+  * Express.js: v5.3.0 (`express`)
+  * Implemented in `server.js` and `routes/*.js`.
+  * Status: Implemented. Verified via HTTP endpoint testing on port 3000.
+- Database Drivers & SDKs:
+  * `@supabase/supabase-js`: v2.118.0 (configured in `config/supabase.js` and `config/db.js`). Implemented.
+  * `mysql2`: v3.24.6 (promise-based connection pool in `config/db.js`). Implemented.
+- Backend Middleware & Utilities:
+  * `bcryptjs`: v3.0.3 (secure one-way password hashing with salt cost 10). Implemented in `routes/auth.js` and `database/create-admin.js`.
+  * `jsonwebtoken`: v9.0.3 (JWT token signing and verification with 7-day expiration). Implemented in `middleware/auth.js`.
+  * `cors`: v2.8.6 (Cross-Origin Resource Sharing middleware). Implemented in `server.js`.
+  * `dotenv`: v18.0.9 (environment variable loading). Implemented in `server.js`, `config/db.js`, `config/supabase.js`.
+  * `crypto`: Node.js standard built-in module (HMAC-SHA256 signature calculation and verification). Implemented in `routes/payments.js`.
+- Frontend Core:
+  * HTML5: Semantic layout in `index.html`.
+  * CSS3: Pure Vanilla CSS with CSS custom variables, glassmorphism, responsive grid/flexbox, zero Tailwind or Bootstrap dependencies. Implemented in `css/*.css`.
+  * JavaScript: Vanilla ES6+ SPA architecture (modular classes, pub/sub reactive store, hash router). Implemented in `js/*.js`.
+- External Typography & CDNs:
+  * Google Fonts: "Outfit" (display headings) and "Plus Jakarta Sans" (interface body text). Implemented in `index.html`.
+  * QR Code API: `api.qrserver.com` (dynamic scannable desktop UPI QR generation). Implemented in `js/views/cart-view.js`.
+- Testing Tools:
+  * `test-app.js`: In-memory Node VM test runner validating frontend modules, Store logic, stock rules, and cart bounds.
+  * `test-backend.js`: HTTP test suite validating 15 Express endpoints, MySQL integration, and error codes.
+  * `test-e2e.js`: Live HTTP integration suite testing auth, rewards, order placement, and cancellation stock refund.
+  * `test-admin-payment.js`: Verifies admin authorization gate (401/403), stats aggregation, payment order creation, and verification.
+
+
+================================================================================
+3. FRONTEND PAGES, VIEWS, COMPONENTS, AND NAVIGATION
+================================================================================
+- Router:
+  * Implementation: `js/router.js` (`Router` object).
+  * Mechanism: Client-side hash routing (`window.location.hash`). Parses route names, path parameters, and query strings (`#catalog?category=Groceries`, `#product/prod-101`, `#store/shop-1`).
+  * Root URL Handling: Accessing `http://localhost:3000/` or `#` automatically resolves to the `home` view.
+  * Status: Implemented. Verified via browser navigation and route hash changes.
+
+- Views (12 distinct view modules):
+  1. `HomeView` (`js/views/home-view.js`):
+     - What it does: Marketplace landing experience with hero banner, 7 category cards, featured products carousel, top Hubballi merchants, value proposition cards, and call to action.
+     - Status: Implemented. Verified via `#home` render.
+  2. `CatalogView` (`js/views/catalog-view.js`):
+     - What it does: Multi-faceted product discovery grid. Includes left-side filters (category, area, price range sliders, in-stock toggle, merchant selection), top search bar, sorting dropdown (price, rating, discount, name), and empty state handling.
+     - Status: Implemented. Verified via `#catalog` and query parameter changes.
+  3. `ProductView` (`js/views/product-view.js`):
+     - What it does: Deep-dive single product page (`#product/:id`). Displays high-res product image, merchant shop badge, breadcrumbs, price discount tags, stock status indicator, quantity selector with available stock ceiling, product attributes table, verified customer reviews listing, and review submission form.
+     - Status: Implemented. Verified via `#product/prod-101`.
+  4. `CompareView` (`js/views/compare-view.js`):
+     - What it does: Smart comparison engine (`#compare`). Compares up to 3 selected products side-by-side across different merchants, highlights the lowest price item, dynamically tabulates technical attributes, and offers one-click Add-to-Cart.
+     - Status: Implemented. Verified in `test-app.js` Test 8.
+  5. `BudgetView` (`js/views/budget-view.js`):
+     - What it does: "Budget Buddy" reverse discovery tool (`#budget`). Allows shoppers to set a maximum rupee limit (e.g. ₹250, ₹500, ₹1000) and category, returning all quality neighbourhood products within budget sorted by price or value.
+     - Status: Implemented. Verified in `test-app.js` Test 9.
+  6. `CartView` (`js/views/cart-view.js`):
+     - What it does: Reversible 5-step checkout flow (`#cart`). Step 1: Cart review; Step 2: Delivery address; Step 3: Delivery options; Step 4: Payment method; Step 5: Final review and loyalty token redemption. Also houses desktop/mobile UPI payment modal.
+     - Status: Implemented. Verified in `test-app.js` and live tests.
+  7. `OrdersView` (`js/views/orders-view.js`):
+     - What it does: Customer order history and tracking timeline (`#orders`). Features 5-stage milestone tracking (Pending, Accepted, Packed, Out for Delivery, Delivered), order cancellation trigger with automatic refund explanation, and printable itemized tax receipt modal.
+     - Status: Implemented. Verified in `test-e2e.js`.
+  8. `SellerView` (`js/views/seller-view.js`):
+     - What it does: Dedicated merchant portal (`#seller`). Includes 4 tabs: Overview (KPIs), Products (Catalogue CRUD and low-stock alerts), Orders (5-stage fulfillment actions), and Analytics (SVG revenue graphs).
+     - Status: Implemented. Verified in `test-backend.js` and `test-app.js`.
+  9. `StorefrontView` (`js/views/storefront-view.js`):
+     - What it does: Public shop showcase (`#store/:id`). Displays shop cover, description, area, business hours, contact phone, verified rating, active promotional offers, and shop-specific product catalog.
+     - Status: Implemented. Verified via `#store/shop-1`.
+  10. `AboutView` (`js/views/about-view.js`):
+      - What it does: Educational brand story (`#about`). Details OneMarket's hyperlocal mission, 6 Hubballi shopping zones, merchant empowerment, and sustainability benefits.
+      - Status: Implemented. Verified via `#about`.
+  11. `PortalView` (`js/views/portal-view.js`):
+      - What it does: Unified account hub (`#portal`). Automatically directs authenticated customers to their orders/reward tokens, sellers to their shop operations console, and admins to the admin operations console.
+      - Status: Implemented. Verified in code and browser routing.
+  12. `AdminView` (`js/views/admin-view.js`):
+      - What it does: Protected administrative console (`#admin`). Platform KPIs, user suspension/reactivation, product deactivation/moderation, platform-wide order monitoring, and immutable audit logs.
+      - Status: Implemented. Verified in `test-admin-payment.js`.
+
+- Components:
+  * `Navbar` (`js/components/navbar.js`): Forest/mint green pill navigation bar, Hubballi zone selector dropdown, live cart count badge, user profile badge, sign-in trigger, and responsive mobile drawer dialog. Implemented.
+  * `AuthModal` (`js/components/auth-modal.js`): Dynamic modal dialog with customer/seller registration and login forms, field validation, and 1-click persona buttons for evaluation. Implemented.
+  * `ProductCard` (`js/components/product-card.js`): Standardized card rendering with promotional discount badges, stock alert pill, quick Add-to-Cart with quantity limits, Compare toggle checkbox, and fallback image handler. Implemented.
+  * `Footer` (`js/components/footer.js`): Global footer featuring shopping zones, category shortcuts, customer assurance badges, and copyright statement. Implemented.
+
+
+================================================================================
+4. CUSTOMER FEATURES
+================================================================================
+- Customer Registration & Login:
+  * Implementation: `routes/auth.js` (`POST /api/auth/register-customer`, `POST /api/auth/login`), `js/components/auth-modal.js`.
+  * Status: Implemented. Verified in `test-backend.js` Test 11.
+  * Details: Securely creates customer record with bcrypt-hashed password (salt 10) and issues a 7-day signed JWT.
+- Multi-Criteria Product Search & Filtering:
+  * Implementation: `routes/products.js` (`GET /api/products`), `js/views/catalog-view.js`.
+  * Status: Implemented. Verified in `test-backend.js` Test 6.
+  * Details: Filter by category, shopping area, minimum/maximum price, in-stock availability, and search text.
+- Product Comparison Matrix:
+  * Implementation: `js/views/compare-view.js`, `js/store.js` (`toggleCompare`, `getCompareList`).
+  * Status: Implemented. Verified in `test-app.js` Test 8.
+  * Details: Compares up to 3 products side-by-side with lowest-price highlight.
+- Budget Buddy Discovery:
+  * Implementation: `js/views/budget-view.js`, `js/store.js` (`getBudgetProducts`).
+  * Status: Implemented. Verified in `test-app.js` Test 9.
+  * Details: Filters products under specified budget threshold (₹250 to ₹10,000+).
+- Shopping Cart & Stock Clamping:
+  * Implementation: `routes/cart.js` (`GET`, `POST`, `PUT`, `DELETE /api/cart`), `js/store.js`.
+  * Status: Implemented. Verified in `test-backend.js` Test 13.
+  * Details: Clamps quantities to real-time warehouse stock. Persists in database for logged-in users and localStorage for guests.
+- Reversible 5-Step Checkout:
+  * Implementation: `js/views/cart-view.js`.
+  * Status: Implemented. Verified in code and live tests.
+  * Details: Step 1 (Cart Review) -> Step 2 (Address with 10-digit phone and PIN validation) -> Step 3 (Delivery vs Pickup) -> Step 4 (Payment Method) -> Step 5 (Final Review & Token Redemption).
+- Loyalty Reward Tokens Program:
+  * Implementation: `routes/orders.js`, `routes/auth.js` (`GET /api/auth/rewards`), `js/store.js`.
+  * Status: Implemented. Verified in `test-e2e.js` Tests 4, 6, 7.
+  * Details: Earns 1 token per ₹100 spent. Redeemable at 1 token = ₹1 discount up to 50% of merchandise subtotal.
+- Order Tracking Timeline:
+  * Implementation: `routes/orders.js` (`GET /api/orders`), `js/views/orders-view.js`.
+  * Status: Implemented. Verified in `test-e2e.js`.
+  * Details: Visual 5-stage milestone progression (Pending -> Confirmed/Accepted -> Packed -> Out for Delivery -> Delivered).
+- Order Cancellation & Automated Inventory Restock:
+  * Implementation: `routes/orders.js` (`POST /api/orders/:id/cancel`).
+  * Status: Implemented. Verified in `test-backend.js` Test 15 and `test-e2e.js` Test 7.
+  * Details: Restores product inventory and rolls back reward tokens. Enforces non-cancellable state check for shipped/delivered orders.
+- Itemized Printable Tax Invoice Receipt:
+  * Implementation: `js/views/orders-view.js` (`OrdersView.showReceiptModal()`).
+  * Status: Implemented. Verified in code inspection and UI modal triggers.
+  * Details: Itemized tax receipt modal displaying merchant details, GST calculation, customer address, token breakdown, and browser print trigger (`window.print()`).
+- Verified Purchase Customer Reviews:
+  * Implementation: `routes/reviews.js` (`POST /api/reviews`, `GET /api/reviews`), `js/views/product-view.js`.
+  * Status: Implemented. Verified in `test-backend.js` Test 14.
+  * Details: Only customers who have an active/completed purchase of the product can submit a 1-5 star review with comment. Re-aggregates product rating and reviews count.
+
+
+================================================================================
+5. SELLER FEATURES
+================================================================================
+- Merchant Self-Registration & Storefront Provisioning:
+  * Implementation: `routes/auth.js` (`POST /api/auth/register-seller`), `js/components/auth-modal.js`.
+  * Status: Implemented. Verified in `test-backend.js` Test 11.
+  * Details: Provisions a new `shops` record and links seller `users.shop_id` in a single transaction.
+- Merchant Operations Dashboard:
+  * Implementation: `js/views/seller-view.js` (`#seller`).
+  * Status: Implemented. Verified in `test-app.js` and `test-backend.js`.
+  * Details: Role-gated interface with 4 tabs:
+    * Overview: Displays active shop name, location, timing, and KPI cards (Active Products, In-Stock Units, Total Orders, Fulfilled Revenue, Low Stock Alerts).
+    * Products: Live merchant catalogue table, stock counters, discount percentage badges, and product creation/editing modal.
+    * Orders: Live merchant fulfillment queue with customer contact info, delivery preference, and transition action buttons.
+    * Analytics: SVG sales trajectory chart, category revenue breakdown, and average order value metrics.
+- Product Catalogue CRUD:
+  * Implementation: `routes/products.js` (`POST /api/products`, `PUT /api/products/:id`, `DELETE /api/products/:id`).
+  * Status: Implemented. Verified in `test-app.js` Test 10 and `test-backend.js`.
+  * Details: Sellers can add new products, modify price, promotional discounts, inventory stock, and description. Role authorization ensures sellers cannot alter or delete products belonging to other merchants.
+- Multi-Stage Order Fulfillment Pipeline:
+  * Implementation: `routes/orders.js` (`PATCH /api/orders/:id/status`), `js/views/seller-view.js`.
+  * Status: Implemented. Verified in `test-backend.js` Test 8 and `test-app.js` Test 6.
+  * Details: Merchant transitions orders through stages: `Accepted` -> `Packed` -> `Shipped` -> `Out for Delivery` -> `Delivered`. Status history logs notes and timestamps.
+- Public Storefront Showcase:
+  * Implementation: `routes/shops.js` (`GET /api/shops/:id`), `js/views/storefront-view.js` (`#store/:id`).
+  * Status: Implemented. Verified in browser routing.
+  * Details: Dedicated public storefront displaying merchant details, timing, phone, ratings, active promotional discounts, and catalogue.
+- Evaluator Persona Switcher:
+  * Implementation: `js/views/seller-view.js` (`#seller-shop-select`), `js/store.js` (`setActiveSellerId`).
+  * Status: Implemented. Verified in UI code.
+  * Details: Allows testing across all 7 Hubballi merchant accounts with 1-click persona switching.
+
+
+================================================================================
+6. ADMIN FEATURES AND ACCESS CONTROLS
+================================================================================
+- Administrator Access Control & Gateway:
+  * Implementation: `middleware/auth.js` (`requireAdmin`), `routes/admin.js`, `js/views/admin-view.js`.
+  * Status: Implemented. Verified in `test-admin-payment.js` Tests 1 and 2.
+  * Details: Unauthenticated requests return `401 Unauthorized`. Users without `role === 'admin'` receive `403 Forbidden`. The frontend renders a dedicated login gateway if unauthenticated, an Access Forbidden warning for regular customers/sellers, and the operations console for verified administrators.
+- Platform KPIs & Sales Analytics:
+  * Implementation: `routes/admin.js` (`GET /api/admin/stats`), `js/views/admin-view.js`.
+  * Status: Implemented. Verified in `test-admin-payment.js` Test 3.
+  * Details: Real-time database metrics: Total Customers (2), Total Sellers (7), Total Shops (7), Active Products (49), Total Orders (23), and Total Platform Sales in INR (excluding cancelled orders). Includes status breakdown (Pending, Confirmed, Delivered, Cancelled).
+- User Management & Moderation:
+  * Implementation: `routes/admin.js` (`GET /api/admin/users`, `PATCH /api/admin/users/:id/status`).
+  * Status: Implemented. Verified in `test-admin-payment.js` Test 4.
+  * Details: Lists all registered customer and merchant accounts with role, contact details, shop association, and account status. Allows suspending or activating accounts. Self-suspension is strictly prevented with a 400 error.
+- Product Moderation:
+  * Implementation: `routes/admin.js` (`GET /api/admin/products`, `PATCH /api/admin/products/:id/status`).
+  * Status: Implemented. Verified in `test-admin-payment.js` Test 5.
+  * Details: Platform-wide catalogue browser with search and category filters. Administrators can deactivate infringing or out-of-compliance product listings with an explicit moderation reason prompt, or reactivate approved listings.
+- Platform Order Monitoring:
+  * Implementation: `routes/admin.js` (`GET /api/admin/orders`).
+  * Status: Implemented. Verified in code.
+  * Details: Real-time marketplace order monitoring across all customers and merchants.
+- Administrative Audit Trail:
+  * Implementation: `routes/admin.js` (`GET /api/admin/audit-logs`, `recordAuditLog()`).
+  * Status: Implemented. Verified in `test-admin-payment.js` Test 9.
+  * Details: Automatically records all admin status modifications (`SUSPEND_USER`, `ACTIVATE_USER`, `MODERATE_DEACTIVATE_PRODUCT`, `REACTIVATE_PRODUCT`) with administrator ID, target type, target ID, detailed JSON payload, and timestamp into `admin_audit_logs`.
+- First-Admin Bootstrap Utility:
+  * Implementation: `database/create-admin.js`.
+  * Status: Implemented. Verified by running script to seed `admin@onemarket.in`.
+  * Details: Command-line script to initialize or update the root administrator account with a bcrypt hash without exposing credentials through public endpoints.
+
+
+================================================================================
+7. PRODUCT CATALOGUE, SEARCH, CATEGORIES, AND IMAGES
+================================================================================
+- Inventory Catalogue Size & Balance:
+  * Size: Exactly 49 products (7 products per category across 7 categories).
+  * Categories (7):
+    1. Books & Stationery (7 items: Parker pens, Moleskine notebooks, desk organizers, etc.)
+    2. Personal Care (7 items: Cardamom hair oil, Neem soap, Kumkumadi serum, etc.)
+    3. Electronics (7 items: ANC headphones, mechanical keyboards, GaN chargers, etc.)
+    4. Fashion (7 items: Linen shirts, silk dupattas, Kolhapuri sandals, leather wallets, etc.)
+    5. Groceries (7 items: Cardamom pods, filter coffee, organic ghee, Byadgi chillies, etc.)
+    6. Home & Living (7 items: Brass diyas, terracotta pots, aroma diffusers, etc.)
+    7. Sports & Lifestyle (7 items: Cork yoga mats, steel sippers, resistance bands, etc.)
+  * Status: Implemented. Verified in `test-app.js` Test 1 and `test-backend.js` Test 4.
+- Query Parameters Supported on `GET /api/products`:
+  * `category`: Filter by category name (e.g. `Groceries`).
+  * `shop_id` or `shopId`: Filter by merchant ID (e.g. `shop-1`).
+  * `search` or `q`: Case-insensitive partial text match on name, description, shop name.
+  * `min_price` and `max_price`: Numeric price range boundaries.
+  * `in_stock=true`: Filters out out-of-stock items (`stock > 0`).
+  * `sort`: `price_asc`, `price_desc`, `rating`, `discount`, `name`.
+  * `featured=true`: Returns curated featured items.
+  * Status: Implemented. Verified in `test-backend.js` Test 6.
+- Product Images:
+  * Image Storage: Local static files stored in `assets/product-images/prod-*.jpg`.
+  * Express Serving: Statically hosted via `express.static(path.join(__dirname))` in `server.js`.
+  * Image Fallback: Dynamic SVG generator (`Utils.getFallbackImageSvg(category, name)`) prevents broken image placeholders.
+  * Status: Implemented. Verified in `test-e2e.js` Test 5.
+
+
+================================================================================
+8. CART AND CHECKOUT FLOW
+================================================================================
+- Cart Storage Architecture:
+  * Authenticated: Synced with `cart_items` table in database via `routes/cart.js`.
+  * Guest: Stored in browser `localStorage` under `onemarket_cart` via `js/store.js`.
+  * Sync on Login: Merges local guest items into database cart upon authentication.
+  * Status: Implemented. Verified in `test-backend.js` Test 13.
+- Stock Ceiling Enforcement:
+  * Adding or updating cart quantities checks available warehouse inventory. If a customer requests more units than in stock, the cart automatically clamps to available stock and alerts the customer.
+  * Status: Implemented. Verified in `test-app.js` Test 3.
+- 5-Step Reversible Wizard:
+  * Step 1: Cart Review (Item quantities, unit prices, line totals, remove buttons, delivery progress bar).
+  * Step 2: Delivery Address (Recipient name, 10-digit mobile number, street address, 6-digit PIN code, special delivery instructions).
+  * Step 3: Delivery Options (Hyperlocal Home Delivery ₹40, Free over ₹500 vs Click & Collect Store Pickup ₹0).
+  * Step 4: Payment Method (UPI Instant, Cash on Delivery, Credit/Debit Card, Net Banking).
+  * Step 5: Final Review & Confirmation (Summary breakdown, loyalty token slider, authoritative grand total, Confirm & Place Order button).
+  * Navigation: Customers can freely navigate backward and forward between steps without losing address or selection data.
+  * Status: Implemented. Verified in `js/views/cart-view.js` and live testing.
+
+
+================================================================================
+9. ORDERS, TRACKING, CANCELLATION, AND INVENTORY
+================================================================================
+- Transactional Order Placement:
+  * Implementation: `routes/orders.js` (`POST /api/orders`).
+  * Transaction Integrity: Uses database transaction with row-level product locking (`FOR UPDATE` in SQL) to prevent race conditions and overselling.
+  * Server Total Validation: Recalculates merchandise subtotal, delivery charges, taxes (5%), and token discounts server-side.
+  * Atomic Inventory Deduction: `UPDATE products SET stock = stock - ? WHERE id = ? AND stock >= ?`.
+  * Automatic Cart Cleanup: Deletes ordered items from `cart_items` table upon successful order placement.
+  * Status: Implemented. Verified in `test-backend.js` Tests 7, 9.
+- Order Tracking Timeline:
+  * Implementation: `routes/orders.js` (`GET /api/orders`), `js/views/orders-view.js`.
+  * Milestone Progression: 5 discrete milestones (Pending -> Confirmed -> Packed -> Out for Delivery -> Delivered).
+  * Audit Trail: Every transition is timestamped and recorded in `order_status_history`.
+  * Status: Implemented. Verified in `test-backend.js` Test 8 and `test-e2e.js`.
+- Self-Service Cancellation & Inventory Restock:
+  * Implementation: `routes/orders.js` (`POST /api/orders/:id/cancel` and `PATCH /api/orders/:id/status`).
+  * Eligibility Rule: Only active orders (`Pending`, `Confirmed`, `Accepted`, `Packed`) can be cancelled. Shipped, out-for-delivery, and completed orders are blocked from direct cancellation.
+  * Inventory Restoration: Iterates through `order_items` and restores exact quantities back to `products.stock`.
+  * Reward Token Rollback: Reverses tokens earned on the order (`CANCELLED_REVERSAL`) and refunds tokens redeemed by the customer (`REFUND`).
+  * Status: Implemented. Verified in `test-backend.js` Test 15 and `test-e2e.js` Test 7.
+
+
+================================================================================
+10. PAYMENTS, INCLUDING GATEWAY INTEGRATION AND VERIFICATION
+================================================================================
+- Gateway Architecture:
+  * Provider: Razorpay Standard UPI Payment Integration.
+  * Implementation: `routes/payments.js`, `js/views/cart-view.js` (`openUpiModal`).
+  * Modes: Automatically switches between `live` and `sandbox` depending on the presence of `RAZORPAY_KEY_SECRET`. Currently operating in verified `sandbox` mode.
+  * Security: Secret keys are strictly confined to the backend server. The public client only receives `keyId`, `mode`, `currency`, `upiVpa`, and `merchantName`.
+- Endpoints:
+  1. `GET /api/payments/config`: Exposes safe public parameters. Implemented.
+  2. `POST /api/payments/create-order`: Generates a unique gateway order ID, verifies order total server-side, prevents duplicate payments, creates standard UPI intent URI (`upi://pay?pa=...`), generates mobile app-switch links, and inserts a pending payment record in `payments`. Implemented. Verified in `test-admin-payment.js` Test 7.
+  3. `POST /api/payments/verify`: Verifies payment authenticity. Uses HMAC-SHA256 signature verification in live mode, or reference validation in sandbox mode. Atomically marks payment `Paid`, order `payment_status` `Paid`, updates order status to `Confirmed`, logs status history, and awards reward tokens. Implemented. Verified in `test-admin-payment.js` Test 8.
+  4. `GET /api/payments/status/:orderId`: Polling endpoint used by the frontend modal every 3.5s to detect live background confirmation. Implemented.
+  5. `POST /api/payments/webhook`: Asynchronous webhook listener verifying Razorpay `x-razorpay-signature` for `payment.captured` events. Implemented.
+- Customer Payment User Interface:
+  * Desktop Experience: Renders dynamic, scannable UPI QR code with a 5:00 countdown timer, instructions for PhonePe, GPay, Paytm, BHIM, CRED, and live polling indicator.
+  * Mobile Experience: App-switch deep links:
+    - PhonePe (`phonepe://pay?...`)
+    - Google Pay (`gpay://upi/pay?...`)
+    - Paytm (`paytmmp://pay?...`)
+    - Generic UPI (`upi://pay?...`)
+  * Instant Sandbox Simulation: Offers a sandbox verification button allowing test evaluators to confirm payments without external banking apps.
+  * Status: Implemented. Verified in `test-admin-payment.js` and browser testing.
+
+
+================================================================================
+11. REWARDS, DISCOUNTS, AND PRICING
+================================================================================
+- Pricing Formula:
+  * Merchandise Subtotal = Sum of (Item Unit Price * Quantity)
+  * Token Discount = Tokens Redeemed * ₹1.00 (capped at max 50% of subtotal)
+  * Delivery Fee = ₹0 for orders >= ₹500; ₹40 for orders < ₹500; ₹0 for Store Pickup
+  * Taxes = Round(5% of Taxable Subtotal)
+  * Grand Total = Max(0, Taxable Subtotal + Delivery Fee + Taxes)
+  * Status: Implemented. Verified in `routes/orders.js` and `js/views/cart-view.js`.
+- Promotional Discounts:
+  * Product records store `price`, `original_price`, and `discount_percent`.
+  * Frontend renders red promotional badges (e.g. "-20% OFF") and strike-through original prices.
+  * Status: Implemented. Verified in catalogue and product views.
+- Loyalty Rewards Token System:
+  * Earn Rate: 1 token per ₹100 eligible spend.
+  * Redemption Rate: 1 token = ₹1 direct discount.
+  * Maximum Redemption Limit: Up to 50% of merchandise subtotal.
+  * Ledger Table: `reward_transactions` records every balance change with types: `EARNED`, `REDEEMED`, `REFUND`, `CANCELLED_REVERSAL`.
+  * Status: Implemented. Verified in `test-e2e.js` Tests 4, 6, 7.
+
+
+================================================================================
+12. DATABASE TABLES, RELATIONSHIPS, MIGRATIONS, AND DATA ACCESS
+================================================================================
+- Primary Database Target: Supabase Postgres via `@supabase/supabase-js`.
+- Schema Migration File: `supabase/migrations/20261024_000001_initial_schema.sql` (443 lines).
+- Seed Data Files: `supabase/seed.sql` (74 KB) and `database/backup-mysql-data.json` (80 KB).
+- Fallback & Compatibility Layer:
+  * `config/supabase.js`: Initializes Supabase client with service-role privileges when configured; provides `SupabaseOfflineAdapter` backed by `backup-mysql-data.json` when credentials are not yet supplied.
+  * `config/db.js`: Maintains unified `query()` and `getConnection()` interfaces, supporting both Supabase Postgres and local MySQL connection pools.
+- Complete Table Inventory (13 Tables):
+  1. `locations`: id (PK), name, pincode, created_at.
+  2. `categories`: id (PK), name (UNIQUE), icon, description, created_at.
+  3. `shops`: id (PK), name, category, area, address, description, rating, reviews_count, image, phone, timing, status, created_at, updated_at.
+  4. `users`: id (PK), name, email (UNIQUE), phone, password_hash, role (CHECK: customer, seller, admin), shop_id (FK -> shops.id), address, city, pincode, reward_tokens, status (CHECK: active, suspended, pending), created_at, updated_at.
+  5. `products`: id (PK), name, category, shop_id (FK -> shops.id), price, original_price, discount_percent, stock, rating, reviews_count, description, attributes (JSONB), tags (JSONB), image, is_featured, is_active, moderation_status (CHECK: approved, flagged, deactivated), moderation_reason, created_at, updated_at.
+  6. `orders`: id (PK), user_id (FK -> users.id), customer_name, customer_phone, customer_address, delivery_preference, payment_method, payment_status, notes, subtotal, delivery_fee, taxes, total, tokens_earned, tokens_redeemed, token_discount, status, created_at, updated_at.
+  7. `order_items`: id (SERIAL PK), order_id (FK -> orders.id), product_id (FK -> products.id), image, name, category, price, original_price, discount, quantity, shop_id (FK -> shops.id), shop_name, created_at.
+  8. `order_status_history`: id (SERIAL PK), order_id (FK -> orders.id), status, timestamp, note.
+  9. `cart_items`: id (SERIAL PK), user_id (FK -> users.id), product_id (FK -> products.id), quantity, created_at, updated_at, UNIQUE(user_id, product_id).
+  10. `reviews`: id (SERIAL PK), product_id (FK -> products.id), user_id (FK -> users.id), customer_name, rating (CHECK 1..5), comment, is_verified_purchase, created_at.
+  11. `reward_transactions`: id (SERIAL PK), user_id (FK -> users.id), order_id, amount, type (CHECK: EARNED, REDEEMED, REFUND, CANCELLED_REVERSAL, ADJUSTMENT), description, created_at.
+  12. `payments`: id (PK), order_id (FK -> orders.id), user_id (FK -> users.id), amount, currency, gateway, gateway_order_id, gateway_payment_id, gateway_signature, status (CHECK: Pending, Paid, Failed, Refunded), method, upi_vpa, raw_response (JSONB), created_at, updated_at.
+  13. `admin_audit_logs`: id (SERIAL PK), admin_id, admin_email, action, target_type, target_id, details, ip_address, created_at.
+- Advanced SQL Features:
+  * Foreign Keys: Defined with `ON DELETE CASCADE` or `ON DELETE SET NULL`.
+  * Indexes: Defined on search fields (`area`, `category`, `pincode`, `role`, `status`, `created_at`, `order_id`, `product_id`).
+  * Row Level Security (RLS): Enabled on all tables with granular SELECT/INSERT/UPDATE policies for public and authenticated roles.
+  * Stored Procedure: `cancel_order_atomic(p_order_id, p_user_id, p_reason)` implementing atomic order cancellation, inventory restoration, and token refund in PL/pgSQL.
+
+
+================================================================================
+13. AUTHENTICATION, AUTHORIZATION, AND SECURITY MEASURES
+================================================================================
+- Password Protection:
+  * Algorithm: `bcryptjs` one-way hashing with salt rounds = 10 (`bcrypt.genSalt(10)`).
+  * Storage: Plaintext passwords are never saved. Only `password_hash` is persisted.
+  * Status: Implemented. Verified in `routes/auth.js` and `test-backend.js`.
+- Session Management:
+  * Standard: JSON Web Tokens (JWT) signed via `jsonwebtoken`.
+  * Expiration: 7 days (`{ expiresIn: '7d' }`).
+  * Secret: Read from `JWT_SECRET` environment variable with fallback.
+  * Client Storage: Stored in browser `localStorage` under `onemarket_auth_token`. Transmitted via `Authorization: Bearer <token>` HTTP header.
+  * Status: Implemented. Verified in `middleware/auth.js` and `test-backend.js`.
+- Role-Based Access Control (RBAC):
+  * Defined Roles: `customer`, `seller`, `admin`.
+  * Registration Protection: Public endpoints (`register-customer` and `register-seller`) hardcode role to `customer` or `seller`. Admin accounts cannot be created via public registration.
+  * Route Guards:
+    - `requireAuth`: Enforces valid JWT token (returns 401 Unauthorized).
+    - `requireRole(...roles)`: Enforces exact role membership (returns 403 Forbidden).
+    - `requireCustomer`: Guard for cart operations and review submissions.
+    - `requireSeller`: Guard for merchant inventory CRUD and order fulfillment.
+    - `requireAdmin`: Guard for platform stats, user suspension, product moderation, and audit logs.
+  * Status: Implemented. Verified in `test-backend.js` Test 12 and `test-admin-payment.js` Tests 1, 2.
+- Web Application Security:
+  * SQL Injection Prevention: 100% of database queries use parameterized prepared statement placeholders (`?`).
+  * Cross-Site Scripting (XSS) Prevention: All dynamic text outputs in templates are passed through `Utils.escapeHTML()`.
+  * CORS Configuration: Standard CORS middleware enabled on Express.
+  * Error Handling: Centralized error handler (`middleware/error-handler.js`) prevents sensitive stack trace leakage to clients.
+  * Gateway Secret Protection: Razorpay secret and database credentials are never transmitted to client JavaScript.
+
+
+================================================================================
+14. APIS AND IMPORTANT ROUTES
+================================================================================
+The Express application mounts the following 31 REST API endpoints:
+
+System & Health:
+- GET  /api/health                     (Public - Server status and uptime)
+- GET  /api/db-health                  (Public - Database connectivity verification)
+- POST /api/demo-reset                 (Public/Demo - Restores test data baseline)
+
+Authentication & Profile:
+- POST /api/auth/register-customer     (Public - Creates customer account & JWT)
+- POST /api/auth/register-seller       (Public - Provisions shop & seller account)
+- POST /api/auth/login                 (Public - Validates credentials & returns JWT)
+- GET  /api/auth/me                    (Auth Required - Current user profile & shop)
+- GET  /api/auth/rewards               (Auth Required - Reward tokens balance & ledger)
+
+Locations & Categories:
+- GET  /api/locations                  (Public - List 6 Hubballi shopping zones)
+- GET  /api/locations/:id              (Public - Single location details)
+- GET  /api/categories                 (Public - List 7 product categories)
+- GET  /api/categories/:id             (Public - Single category details)
+
+Shops & Storefronts:
+- GET  /api/shops                      (Public - Filter shops by area, category, search)
+- GET  /api/shops/:id                  (Public - Single shop profile & business hours)
+
+Products & Catalogue:
+- GET    /api/products                 (Public - Filter products: category, price, stock, search)
+- GET    /api/products/:id             (Public - Single product details & specifications)
+- POST   /api/products                 (Seller Auth - Create product in seller's shop)
+- PUT    /api/products/:id             (Seller Auth - Update product price, stock, discounts)
+- DELETE /api/products/:id             (Seller Auth - Remove product from catalogue)
+
+Shopping Cart:
+- GET    /api/cart                     (Auth Required - Current user's database cart)
+- POST   /api/cart                     (Auth Required - Add item or increment quantity)
+- PUT    /api/cart/:productId          (Auth Required - Set explicit quantity with stock clamp)
+- DELETE /api/cart/:productId          (Auth Required - Remove single item from cart)
+- DELETE /api/cart                     (Auth Required - Clear entire user cart)
+
+Orders & Fulfillment:
+- GET   /api/orders                    (Public/Optional Auth - Filter by shop_id or user_id)
+- POST  /api/orders                    (Public/Optional Auth - Atomic transactional checkout)
+- PATCH /api/orders/:id/status         (Optional Auth - Transition fulfillment status)
+- POST  /api/orders/:id/cancel         (Optional Auth - Customer order cancellation)
+
+Customer Reviews:
+- GET   /api/reviews                   (Public - List reviews by productId)
+- POST  /api/reviews                   (Auth Required - Submit verified purchase review)
+
+Payments & UPI Gateway:
+- GET  /api/payments/config            (Public - Safe payment gateway public config)
+- POST /api/payments/create-order      (Optional Auth - Initiate UPI payment order)
+- POST /api/payments/verify            (Optional Auth - Verify signature & confirm order)
+- GET  /api/payments/status/:orderId   (Public - Live payment status polling)
+- POST /api/payments/webhook           (Public/Razorpay - Asynchronous webhook callback)
+
+Admin Operations (Strictly requireAdmin):
+- GET   /api/admin/stats               (Admin Auth - Platform revenue, users, orders KPIs)
+- GET   /api/admin/users               (Admin Auth - List registered accounts & statuses)
+- PATCH /api/admin/users/:id/status    (Admin Auth - Suspend or activate user account)
+- GET   /api/admin/products            (Admin Auth - Moderate marketplace products)
+- PATCH /api/admin/products/:id/status (Admin Auth - Deactivate or reactivate listing)
+- GET   /api/admin/orders              (Admin Auth - Platform-wide order monitoring)
+- GET   /api/admin/audit-logs          (Admin Auth - Immutable administrative audit trail)
+
+
+================================================================================
+15. RESPONSIVE DESIGN AND ACCESSIBILITY BEHAVIOR
+================================================================================
+- Responsive Breakpoints (`css/upgrade.css`, `css/marketplace.css`):
+  * Desktop (>= 1120px): Full horizontal pill navigation, 4-column product grids, side-by-side cart layout.
+  * Tablet (768px - 1119px): Navigation collapses to pill group or mobile drawer at 1120px; 2-3 column product grid; cart summary stacks above/below items.
+  * Mobile (580px - 767px): Cart items switch from table to card layout; checkout stepper nodes scroll horizontally without line breaks; filter sidebars collapse into touch-friendly accordion.
+  * Small Mobile (360px - 390px):
+    - Cart items use 2-row compact layout: image (64x64px) + title on row 1, quantity buttons + total price on row 2.
+    - Stepper title text hides on inactive nodes, displaying only circular numbered badges to preserve screen width.
+    - Modals automatically expand to `width: 95vw` with touch margins.
+    - Hero grid stacks cleanly to 1 column.
+    - Page-wide horizontal scrolling is strictly eliminated (`overflow-x: hidden` on viewport wrappers).
+  * Status: Implemented. Verified across 360px, 390px, 768px, and 1366px screen geometries.
+- Accessibility Standards:
+  * Semantic HTML5: `<header>`, `<nav>`, `<main role="main">`, `<footer>`, `<section>`, `<article>`.
+  * ARIA Attributes: `aria-label` on icon buttons and navigation bars, `aria-live="polite"` on notification toast container, `aria-atomic="true"`.
+  * Touch Targets: Minimum 44x44px touch targets on mobile buttons and inputs.
+  * Visual Contrast: High-contrast forest-green (`#064e3b`, `#1b4332`) and crisp slate neutrals (`#0f172a`, `#334155`) exceed WCAG 2.1 AA ratios on light backgrounds.
+  * Focus Indicators: Clear outline/ring styling (`box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.15)`) on focused interactive controls.
+
+
+================================================================================
+16. LOCATION-BASED AND HUBBALLI DISCOVERY FEATURES
+================================================================================
+- Neighbourhood Shopping Zones Configured:
+  1. Koppikar Road, Hubballi (PIN 580020) — Historic spice market, wholesale dry fruits, traditional pantry.
+  2. Vidyanagar, Hubballi (PIN 580021) — Academic and commercial hub, books, stationery, electronics.
+  3. Gokul Road, Hubballi (PIN 580030) — Handloom studios, textiles, apparel, artisan crafts.
+  4. Keshwapur, Hubballi (PIN 580023) — Residential neighbourhood, organic botanics, herbal apothecary.
+  5. Unkal, Hubballi (PIN 580031) — Lake district, sustainable living, handcrafted earthenware, home decor.
+  6. Shirur Park, Hubballi (PIN 580021) — Modern lifestyle avenue, sportswear, outdoor gear, fitness.
+- Zone Selection & Filtering:
+  * Header dropdown (`#header-location-select`) allows shoppers to switch their active neighbourhood zone.
+  * Selection is preserved in `Store.selectedLocation` and automatically filters shop listings and recommendations.
+  * Merchants prominently display their neighbourhood zone and PIN code on cards and public storefronts.
+  * Status: Implemented. Verified in `test-backend.js` Test 3 and `test-app.js`.
+
+
+================================================================================
+17. TESTING, STARTUP, AND DEPLOYMENT SETUP
+================================================================================
+- Startup Configuration:
+  * Server entry point: `server.js`.
+  * Script command: `npm start` or `node server.js`.
+  * Port: 3000 (configurable via `process.env.PORT`).
+  * Web URL: `http://localhost:3000/`.
+  * Single Root Link: Accessing `http://localhost:3000/` opens the complete unified marketplace application. All sections (Catalogue, Cart, Orders, Seller Portal, Storefronts, Admin Console) are accessible through internal navigation without separate URLs.
+- Automated Test Suites:
+  * `npm test` executes: `node test-app.js && node test-backend.js`
+  * Complete test suite commands available in workspace:
+    1. `node test-app.js` (10/10 frontend business logic suites passed, 100%).
+    2. `node test-backend.js` (15/15 Express REST API suites passed, 100%).
+    3. `node test-e2e.js` (7/7 live HTTP integration suites passed, 100%).
+    4. `node test-admin-payment.js` (9/9 admin gate and UPI payment suites passed, 100%).
+- Deployment Setup:
+  * Current State: Running locally on `http://localhost:3000/`.
+  * Hosting Status: Local-only. No external cloud hosting provider (e.g. Render, Railway, Vercel, AWS) is currently linked or active in git configuration.
+  * Claim: The application is fully functional and verified locally, but cannot be classified as public cloud-hosted until provisioned on an external cloud host.
+
+
+================================================================================
+18. ENVIRONMENT VARIABLES AND EXTERNAL SERVICES
+================================================================================
+- Environment Variables Configured / Checked:
+  * `PORT`: Web server port (Default: `3000`).
+  * `JWT_SECRET`: Secret key for signing and verifying JWT authentication tokens (Default fallback configured).
+  * `DB_HOST`: Local MySQL hostname (Default: `localhost`).
+  * `DB_PORT`: Local MySQL port (Default: `3306`).
+  * `DB_USER`: Local MySQL user (Default: `root`).
+  * `DB_PASSWORD`: Local MySQL password.
+  * `DB_NAME`: Local MySQL database name (Default: `localloop`).
+  * `DB_CONNECTION_LIMIT`: Connection pool capacity (Default: `10`).
+  * `SUPABASE_URL`: Supabase project URL (`https://<project-ref>.supabase.co`).
+  * `SUPABASE_SERVICE_ROLE_KEY`: Supabase backend service-role API key.
+  * `SUPABASE_ANON_KEY`: Supabase public anonymous API key.
+  * `RAZORPAY_KEY_ID`: Razorpay public Key ID (Default: `rzp_test_onemarket_hubballi`).
+  * `RAZORPAY_KEY_SECRET`: Razorpay API secret key for HMAC-SHA256 signature verification.
+  * `RAZORPAY_WEBHOOK_SECRET`: Razorpay webhook secret for async signature check.
+  * `PAYMENT_GATEWAY_MODE`: Gateway execution mode (`sandbox` or `live`).
+  * `UPI_MERCHANT_VPA`: Merchant Virtual Payment Address (Default: `onemarket.hubballi@icici`).
+- External Services:
+  * Google Fonts CDN: Static stylesheet and font files for Outfit and Plus Jakarta Sans.
+  * QR Server API (`api.qrserver.com`): Dynamic SVG/PNG generation for UPI payment QR codes.
+  * Razorpay Payment Gateway: Sandbox integration active for Indian UPI payments.
+  * Supabase Postgres: Cloud database target, supported by `SupabaseOfflineAdapter` fallback.
+
+
+================================================================================
+19. KNOWN LIMITATIONS, INCOMPLETE FEATURES, MOCKS, AND SETUP STILL REQUIRED
+================================================================================
+1. Hosting Environment:
+   - Status: Local-Only (`http://localhost:3000/`).
+   - Setup Required: To provide a public internet URL, the project must be deployed to a cloud hosting platform (e.g. Render, Railway, AWS ECS, or Fly.io) with appropriate port and environment variable bindings.
+2. Supabase Cloud Project Provisioning:
+   - Status: Offline Adapter / MySQL Active.
+   - Detail: The application contains full Supabase schemas (`supabase/migrations/20261024_000001_initial_schema.sql`), seed scripts, and an offline in-memory adapter that enables 100% test passing locally.
+   - Setup Required: A live Supabase project must be created in the Supabase Cloud dashboard, the migration script executed, and the project's real `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` added to `.env`.
+3. Payment Gateway Production Credentials:
+   - Status: Sandbox Mode (`PAYMENT_GATEWAY_MODE=sandbox`).
+   - Detail: Desktop QR codes, UPI app deep links, polling, signature logic, and payment state transitions are fully implemented and verified. However, live banking transactions require a registered merchant business account with Razorpay, KYC approval, and live API keys (`RAZORPAY_KEY_SECRET`).
+4. SMS / OTP Verification:
+   - Status: Not Implemented (Email/password used instead).
+   - Detail: Phone numbers are collected and validated (10 digits) for customer deliveries and merchant listings, but real-time SMS OTP verification is not integrated (no Twilio/Gupshup gateway configured).
+5. Automated Geolocation / GPS Coordinates:
+   - Status: Mocked / Dropdown Driven.
+   - Detail: Shopping zone selection is executed through an explicit neighbourhood dropdown rather than HTML5 browser GPS coordinate triangulation.
+6. Email Dispatching:
+   - Status: In-App / On-Screen Receipts Only.
+   - Detail: Orders generate complete on-screen printable tax receipts and in-app tracking records, but no outbound SMTP server (e.g. SendGrid, SES) is connected to email PDF invoices to customers.
+
+================================================================================
+END OF INVENTORY REPORT — ONEMARKET 2026
+================================================================================

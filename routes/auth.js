@@ -7,6 +7,7 @@
 const express = require('express');
 const bcrypt = require('bcryptjs');
 const { query } = require('../config/db');
+const { syncToSupabase } = require('../config/supabase');
 const { signToken, requireAuth } = require('../middleware/auth');
 
 const router = express.Router();
@@ -49,6 +50,20 @@ router.post('/register-customer', async (req, res, next) => {
       INSERT INTO users (id, name, email, phone, password_hash, role, address, city, pincode)
       VALUES (?, ?, ?, ?, ?, 'customer', ?, ?, ?)
     `, [userId, name.trim(), cleanEmail, phone ? phone.trim() : null, passwordHash, address ? address.trim() : null, city ? city.trim() : 'Bengaluru', pincode ? pincode.trim() : '560001']);
+
+    await syncToSupabase('users', 'insert', {
+      id: userId,
+      name: name.trim(),
+      email: cleanEmail,
+      phone: phone ? phone.trim() : null,
+      password_hash: passwordHash,
+      role: 'customer',
+      address: address ? address.trim() : null,
+      city: city ? city.trim() : 'Bengaluru',
+      pincode: pincode ? pincode.trim() : '560001',
+      reward_tokens: 0,
+      status: 'active'
+    });
 
     const userPayload = {
       id: userId,
@@ -129,6 +144,35 @@ router.post('/register-seller', async (req, res, next) => {
       INSERT INTO users (id, name, email, phone, password_hash, role, shop_id, address, city)
       VALUES (?, ?, ?, ?, ?, 'seller', ?, ?, 'Bengaluru')
     `, [userId, name.trim(), cleanEmail, phone ? phone.trim() : null, passwordHash, shopId, chosenAddress]);
+
+    await syncToSupabase('shops', 'insert', {
+      id: shopId,
+      name: shopName.trim(),
+      category: chosenCategory,
+      area: chosenArea,
+      address: chosenAddress,
+      description: `Independent neighbourhood merchant offering authentic ${chosenCategory.toLowerCase()} in ${chosenArea}.`,
+      rating: 5.0,
+      reviews_count: 1,
+      image: defaultImage,
+      phone: phone ? phone.trim() : null,
+      timing: '9:00 AM - 9:00 PM',
+      status: 'active'
+    });
+
+    await syncToSupabase('users', 'insert', {
+      id: userId,
+      name: name.trim(),
+      email: cleanEmail,
+      phone: phone ? phone.trim() : null,
+      password_hash: passwordHash,
+      role: 'seller',
+      shop_id: shopId,
+      address: chosenAddress,
+      city: 'Hubballi',
+      reward_tokens: 20,
+      status: 'active'
+    });
 
     const userPayload = {
       id: userId,

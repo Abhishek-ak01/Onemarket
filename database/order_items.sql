@@ -1,0 +1,14 @@
+INSERT INTO order_items (id, order_id, product_id, image, name, category, price, original_price, discount, quantity, shop_id, shop_name) VALUES
+(1, 'LL-2026-1042', 'prod-101', 'assets/product-images/prod-101.jpg', 'Wayanad Cardamom Pods (Grade 8mm)', 'Groceries', 340.00, NULL, 0.00, 2, 'shop-1', 'Malabar Heritage Spices & Pantry'),
+(2, 'LL-2026-1042', 'prod-601', 'assets/product-images/prod-601.jpg', 'Neem & Tulsi Cold-Processed Bathing Bar', 'Personal Care', 180.00, NULL, 0.00, 1, 'shop-6', 'Veda Botanics & Apothecary'),
+(5, 'LL-2026-1043', 'prod-201', 'assets/product-images/prod-201.jpg', 'BoltStream 65W GaN Fast Wall Charger', 'Electronics', 1899.00, NULL, 0.00, 1, 'shop-2', 'Apex Tech & Gadget Hub'),
+(6, 'LL-2026-1044', 'prod-501', 'assets/product-images/prod-501.jpg', 'Handcrafted Terracotta Indoor Planter (7 Inch)', 'Home & Living', 380.00, NULL, 0.00, 2, 'shop-5', 'Prakriti Home & Sustainable Living'),
+(7, 'LL-2026-1044', 'prod-401', 'assets/product-images/prod-401.jpg', 'Hardbound Handmade Cotton Paper Journal (A5)', 'Books & Stationery', 450.00, NULL, 0.00, 1, 'shop-4', 'Saraswati Book Haven & Fine Papers'),
+(26, 'LL-2026-8539', 'prod-702', 'assets/product-images/prod-702.jpg', 'Titanium Graphite High-Tension Badminton Racket (4U)', 'Sports & Lifestyle', 1750.00, '2250.00', 500.00, 2, 'shop-7', 'DecaPulse Sports & Outdoor Hub'),
+(27, 'LL-2026-1281', 'prod-702', 'assets/product-images/prod-702.jpg', 'Titanium Graphite High-Tension Badminton Racket (4U)', 'Sports & Lifestyle', 1750.00, '2250.00', 500.00, 2, 'shop-7', 'DecaPulse Sports & Outdoor Hub'),
+(28, 'LL-2026-4065', 'prod-702', 'assets/product-images/prod-702.jpg', 'Titanium Graphite High-Tension Badminton Racket (4U)', 'Sports & Lifestyle', 1750.00, '2250.00', 500.00, 2, 'shop-7', 'DecaPulse Sports & Outdoor Hub'),
+(29, 'LL-2026-2253', 'prod-702', 'assets/product-images/prod-702.jpg', 'Titanium Graphite High-Tension Badminton Racket (4U)', 'Sports & Lifestyle', 1750.00, '2250.00', 500.00, 2, 'shop-7', 'DecaPulse Sports & Outdoor Hub'),
+(30, 'LL-LIVE-1792817549008', 'prod-101', 'assets/product-images/prod-101.jpg', 'Wayanad Cardamom Pods (Grade 8mm)', 'Groceries', 10.00, '425.00', 415.00, 1, 'shop-1', 'Malabar Heritage Spices & Pantry'),
+(31, 'LL-2026-4808', 'prod-101', 'assets/product-images/prod-101.jpg', 'Wayanad Cardamom Pods (Grade 8mm)', 'Groceries', 10.00, '425.00', 415.00, 1, 'shop-1', 'Malabar Heritage Spices & Pantry'),
+(32, 'LL-2026-4808', 'prod-701', 'assets/product-images/prod-701.jpg', 'Eco-Friendly Natural Tree Rubber & Cork Yoga Mat (6mm)', 'Sports & Lifestyle', 1999.00, '2600.00', 601.00, 1, 'shop-7', 'DecaPulse Sports & Outdoor Hub')
+ON CONFLICT (id) DO NOTHING;

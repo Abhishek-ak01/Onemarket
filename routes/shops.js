@@ -6,6 +6,7 @@
 const express = require('express');
 const router = express.Router();
 const db = require('../config/db');
+const { syncToSupabase } = require('../config/supabase');
 
 /**
  * GET /api/shops
@@ -148,6 +149,23 @@ router.post('/', async (req, res, next) => {
     );
 
     const [created] = await db.query('SELECT * FROM shops WHERE id = ?', [id]);
+    if (created) {
+      await syncToSupabase('shops', 'insert', {
+        id,
+        name: created.name,
+        category: created.category,
+        area: created.area,
+        address: created.address,
+        description: created.description,
+        rating: 4.5,
+        reviews_count: 1,
+        image: created.image,
+        phone: created.phone,
+        timing: created.timing,
+        status: 'active'
+      });
+    }
+
     res.status(201).json({
       success: true,
       message: 'Shop created successfully.',
@@ -192,6 +210,20 @@ router.put('/:id', async (req, res, next) => {
     await db.query(`UPDATE shops SET ${updates.join(', ')} WHERE id = ?`, params);
 
     const [updated] = await db.query('SELECT * FROM shops WHERE id = ?', [shopId]);
+    if (updated) {
+      await syncToSupabase('shops', 'update', {
+        name: updated.name,
+        category: updated.category,
+        area: updated.area,
+        address: updated.address,
+        description: updated.description,
+        phone: updated.phone,
+        timing: updated.timing,
+        image: updated.image,
+        updated_at: new Date().toISOString()
+      }, 'id', shopId);
+    }
+
     res.json({
       success: true,
       message: 'Shop updated successfully.',
@@ -216,6 +248,7 @@ router.delete('/:id', async (req, res, next) => {
     }
 
     await db.query('DELETE FROM shops WHERE id = ?', [shopId]);
+    await syncToSupabase('shops', 'delete', null, 'id', shopId);
     res.json({
       success: true,
       message: `Shop "${shopId}" and related listings deleted successfully.`

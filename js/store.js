@@ -1432,6 +1432,35 @@ const Store = (() => {
     },
 
     /**
+     * Submit customer or merchant inquiry to Supabase backend
+     */
+    async submitInquiry(inquiryData) {
+      try {
+        const res = await fetch(this.getApiUrl('/api/inquiries'), {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(inquiryData)
+        });
+        return await res.json();
+      } catch (err) {
+        return { success: false, message: err.message };
+      }
+    },
+
+    /**
+     * Fetch inquiries from backend
+     */
+    async getInquiries(params = {}) {
+      try {
+        const query = new URLSearchParams(params).toString();
+        const res = await fetch(this.getApiUrl(`/api/inquiries${query ? '?' + query : ''}`));
+        return await res.json();
+      } catch (err) {
+        return { success: false, message: err.message, data: [] };
+      }
+    },
+
+    /**
      * Safely resets all test orders, clears shopping cart, and restores inventory to baseline seed state.
      */
     async resetDemoData() {

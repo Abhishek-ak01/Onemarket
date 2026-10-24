@@ -101,7 +101,18 @@ const AboutView = {
               POST   /api/orders                      <span style="color: #94a3b8;">// Customer order request</span><br/>
               PATCH  /api/orders/:id/status           <span style="color: #94a3b8;">// ACID transaction deducting inventory</span><br/>
               POST   /api/reviews                     <span style="color: #94a3b8;">// Verified purchase customer reviews</span><br/>
+              POST   /api/inquiries                   <span style="color: #94a3b8;">// Inquiries & contact forms (saved in Supabase backend)</span><br/>
               POST   /api/demo-reset                  <span style="color: #94a3b8;">// Safe baseline demo environment reset</span>
+            </div>
+
+            <div style="margin-top: 20px; padding: 16px 20px; background: #ecfdf5; border: 1px solid #a7f3d0; border-radius: var(--radius-lg); display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;">
+              <div>
+                <strong style="color: #065f46;">Have questions or want to partner with OneMarket?</strong>
+                <div style="font-size: 0.85rem; color: #047857;">Submit an inquiry directly to our Supabase cloud database backend.</div>
+              </div>
+              <a href="#inquiry" class="btn btn-primary btn-sm">
+                ✉️ Submit Inquiry
+              </a>
             </div>
           </div>
         </div>

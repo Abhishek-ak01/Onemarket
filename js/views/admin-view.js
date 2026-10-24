@@ -10,12 +10,14 @@
  */
 
 const AdminView = {
-  currentTab: 'overview', // 'overview', 'users', 'products', 'orders', 'audit'
+  currentTab: 'overview', // 'overview', 'users', 'products', 'orders', 'audit', 'inquiries'
   stats: null,
   users: [],
   products: [],
   orders: [],
   auditLogs: [],
+  inquiries: [],
+  inquiryFilter: 'all',
   userFilter: 'all',
   userSearch: '',
   productFilter: 'all',
@@ -140,6 +142,9 @@ const AdminView = {
             <button type="button" class="admin-tab-btn ${this.currentTab === 'audit' ? 'active' : ''}" data-tab="audit" style="padding: 10px 18px; border: none; background: none; font-weight: 700; font-size: 0.9rem; cursor: pointer; border-bottom: 3px solid ${this.currentTab === 'audit' ? '#065f46' : 'transparent'}; color: ${this.currentTab === 'audit' ? '#065f46' : '#64748b'};">
               📜 Audit Trail (${this.auditLogs.length})
             </button>
+            <button type="button" class="admin-tab-btn ${this.currentTab === 'inquiries' ? 'active' : ''}" data-tab="inquiries" style="padding: 10px 18px; border: none; background: none; font-weight: 700; font-size: 0.9rem; cursor: pointer; border-bottom: 3px solid ${this.currentTab === 'inquiries' ? '#065f46' : 'transparent'}; color: ${this.currentTab === 'inquiries' ? '#065f46' : '#64748b'};">
+              ✉️ Inquiries (${this.inquiries.length})
+            </button>
           </div>
 
           <!-- Tab Content Area -->
@@ -164,6 +169,8 @@ const AdminView = {
         return this.renderOrdersTab();
       case 'audit':
         return this.renderAuditTab();
+      case 'inquiries':
+        return this.renderInquiriesTab();
       default:
         return this.renderOverviewTab();
     }
@@ -578,6 +585,102 @@ const AdminView = {
     `;
   },
 
+  renderInquiriesTab() {
+    let filteredInquiries = [...this.inquiries];
+    if (this.inquiryFilter !== 'all') {
+      filteredInquiries = filteredInquiries.filter(i => (i.status || 'unread') === this.inquiryFilter);
+    }
+
+    const shopsMap = {};
+    Store.getShops().forEach(s => { shopsMap[s.id] = s.name; });
+
+    return `
+      <div>
+        <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; margin-bottom: 20px;">
+          <div>
+            <h3 style="font-size: 1.25rem; font-weight: 800; color: #064e3b; margin: 0 0 4px;">
+              Customer & Merchant Inquiries (${this.inquiries.length})
+            </h3>
+            <p style="font-size: 0.85rem; color: #64748b; margin: 0;">
+              All form details and inquiries submitted by visitors are securely saved in our Supabase cloud backend.
+            </p>
+          </div>
+
+          <!-- Status Filters -->
+          <div style="display: flex; gap: 6px;">
+            <button type="button" class="btn btn-sm ${this.inquiryFilter === 'all' ? 'btn-primary' : 'btn-outline'} inquiry-status-filter" data-status="all">All (${this.inquiries.length})</button>
+            <button type="button" class="btn btn-sm ${this.inquiryFilter === 'unread' ? 'btn-primary' : 'btn-outline'} inquiry-status-filter" data-status="unread">Unread</button>
+            <button type="button" class="btn btn-sm ${this.inquiryFilter === 'in_progress' ? 'btn-primary' : 'btn-outline'} inquiry-status-filter" data-status="in_progress">In Progress</button>
+            <button type="button" class="btn btn-sm ${this.inquiryFilter === 'resolved' ? 'btn-primary' : 'btn-outline'} inquiry-status-filter" data-status="resolved">Resolved</button>
+          </div>
+        </div>
+
+        <div style="background: #ffffff; border-radius: var(--radius-xl); border: 1px solid #e2e8f0; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+          <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.875rem;">
+            <thead>
+              <tr style="background: #f8fafc; border-bottom: 2px solid #e2e8f0; color: #475569; font-size: 0.75rem; text-transform: uppercase;">
+                <th style="padding: 12px 16px;">Ref ID</th>
+                <th style="padding: 12px 16px;">Sender Details</th>
+                <th style="padding: 12px 16px;">Target</th>
+                <th style="padding: 12px 16px;">Subject & Message</th>
+                <th style="padding: 12px 16px;">Date</th>
+                <th style="padding: 12px 16px;">Status</th>
+                <th style="padding: 12px 16px; text-align: right;">Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${filteredInquiries.length === 0 ? `
+                <tr><td colspan="7" style="padding: 40px; text-align: center; color: #64748b;">No inquiries found matching this filter.</td></tr>
+              ` : filteredInquiries.map(inq => {
+                const statusColor = inq.status === 'resolved' ? '#047857' : (inq.status === 'in_progress' ? '#b45309' : '#1d4ed8');
+                const statusBg = inq.status === 'resolved' ? '#ecfdf5' : (inq.status === 'in_progress' ? '#fef3c7' : '#eff6ff');
+                const targetShopName = inq.shop_id ? (shopsMap[inq.shop_id] || inq.shop_id) : 'General Platform';
+
+                return `
+                  <tr style="border-bottom: 1px solid #f1f5f9;">
+                    <td style="padding: 12px 16px; font-weight: 700; color: #065f46; font-size: 0.8rem;">
+                      #INQ-${inq.id}
+                    </td>
+                    <td style="padding: 12px 16px;">
+                      <div style="font-weight: 700; color: #1e293b;">${Utils.escapeHTML(inq.name || '')}</div>
+                      <div style="font-size: 0.75rem; color: #64748b;">✉️ ${Utils.escapeHTML(inq.email || '')}</div>
+                      ${inq.phone ? `<div style="font-size: 0.75rem; color: #64748b;">📞 ${Utils.escapeHTML(inq.phone)}</div>` : ''}
+                    </td>
+                    <td style="padding: 12px 16px; font-size: 0.8rem; color: #334155;">
+                      <span style="display: inline-block; padding: 2px 8px; border-radius: 4px; background: #f1f5f9; font-weight: 600;">
+                        ${Utils.escapeHTML(targetShopName)}
+                      </span>
+                    </td>
+                    <td style="padding: 12px 16px; max-width: 320px;">
+                      <div style="font-weight: 600; color: #0f172a; margin-bottom: 2px;">${Utils.escapeHTML(inq.subject || 'Inquiry')}</div>
+                      <div style="font-size: 0.8rem; color: #475569; line-height: 1.4;">${Utils.escapeHTML(inq.message || '')}</div>
+                    </td>
+                    <td style="padding: 12px 16px; font-size: 0.75rem; color: #64748b; white-space: nowrap;">
+                      ${inq.created_at ? new Date(inq.created_at).toLocaleDateString('en-IN', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : '—'}
+                    </td>
+                    <td style="padding: 12px 16px;">
+                      <span style="font-size: 0.75rem; font-weight: 700; text-transform: uppercase; padding: 3px 8px; border-radius: var(--radius-full); background: ${statusBg}; color: ${statusColor};">
+                        ${inq.status || 'unread'}
+                      </span>
+                    </td>
+                    <td style="padding: 12px 16px; text-align: right; white-space: nowrap;">
+                      <select class="form-control select-inquiry-status" data-inquiry-id="${inq.id}" style="font-size: 0.75rem; padding: 4px 8px; border-radius: 6px; border: 1px solid #cbd5e1;">
+                        <option value="unread" ${inq.status === 'unread' ? 'selected' : ''}>Unread</option>
+                        <option value="in_progress" ${inq.status === 'in_progress' ? 'selected' : ''}>In Progress</option>
+                        <option value="resolved" ${inq.status === 'resolved' ? 'selected' : ''}>Resolved</option>
+                        <option value="archived" ${inq.status === 'archived' ? 'selected' : ''}>Archived</option>
+                      </select>
+                    </td>
+                  </tr>
+                `;
+              }).join('')}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    `;
+  },
+
   async loadAdminData() {
     const currentUser = Store.getCurrentUser();
     if (!currentUser || currentUser.role !== 'admin') return;
@@ -588,12 +691,13 @@ const AdminView = {
     try {
       this.isLoading = true;
 
-      const [statsRes, usersRes, prodsRes, ordersRes, auditRes] = await Promise.all([
+      const [statsRes, usersRes, prodsRes, ordersRes, auditRes, inquiriesRes] = await Promise.all([
         fetch('/api/admin/stats', { headers }).then(r => r.json()).catch(() => ({})),
         fetch('/api/admin/users', { headers }).then(r => r.json()).catch(() => ({})),
         fetch('/api/admin/products', { headers }).then(r => r.json()).catch(() => ({})),
         fetch('/api/admin/orders', { headers }).then(r => r.json()).catch(() => ({})),
-        fetch('/api/admin/audit-logs', { headers }).then(r => r.json()).catch(() => ({}))
+        fetch('/api/admin/audit-logs', { headers }).then(r => r.json()).catch(() => ({})),
+        fetch('/api/inquiries').then(r => r.json()).catch(() => ({}))
       ]);
 
       if (statsRes.success) this.stats = statsRes.stats;
@@ -601,6 +705,7 @@ const AdminView = {
       if (prodsRes.success) this.products = prodsRes.products || [];
       if (ordersRes.success) this.orders = ordersRes.orders || [];
       if (auditRes.success) this.auditLogs = auditRes.logs || [];
+      if (inquiriesRes.success) this.inquiries = inquiriesRes.data || [];
 
       this.isLoading = false;
       this.updateViewDOM();
@@ -818,5 +923,40 @@ const AdminView = {
         this.updateViewDOM();
       });
     }
+
+    // Inquiry filter listeners
+    document.querySelectorAll('.inquiry-status-filter').forEach(btn => {
+      btn.addEventListener('click', () => {
+        this.inquiryFilter = btn.getAttribute('data-status');
+        this.updateViewDOM();
+      });
+    });
+
+    // Inquiry status update listener
+    document.querySelectorAll('.select-inquiry-status').forEach(sel => {
+      sel.addEventListener('change', async (e) => {
+        const inqId = sel.getAttribute('data-inquiry-id');
+        const newStatus = e.target.value;
+        try {
+          sel.disabled = true;
+          const res = await fetch(`/api/inquiries/${inqId}/status`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ status: newStatus })
+          });
+          const data = await res.json();
+          if (res.ok && data.success) {
+            Utils.showToast(`Inquiry #${inqId} marked as ${newStatus}`, 'success');
+            await this.loadAdminData();
+          } else {
+            Utils.showToast(data.message || 'Failed to update inquiry status', 'error');
+            sel.disabled = false;
+          }
+        } catch (err) {
+          Utils.showToast('Network error updating inquiry status', 'error');
+          sel.disabled = false;
+        }
+      });
+    });
   }
 };

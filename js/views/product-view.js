@@ -249,6 +249,17 @@ const ProductView = {
                     ${isInCompare ? `${Utils.icons.check} Comparing` : `${Utils.icons.compare} Compare`}
                   </button>
 
+                  <!-- Product Inquiry Button -->
+                  <a 
+                    href="#inquiry?shop_id=${encodeURIComponent(product.shopId || '')}&subject=${encodeURIComponent('Inquiry regarding ' + product.name)}" 
+                    class="btn btn-outline btn-lg" 
+                    id="btn-product-inquire"
+                    title="Send an inquiry or bulk order question to the merchant"
+                    style="display: inline-flex; align-items: center; gap: 6px;"
+                  >
+                    ✉️ Inquire / Bulk Question
+                  </a>
+
                 </div>
               </div>
 

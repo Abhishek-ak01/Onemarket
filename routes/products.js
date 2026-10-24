@@ -6,6 +6,7 @@
 const express = require('express');
 const router = express.Router();
 const db = require('../config/db');
+const { syncToSupabase } = require('../config/supabase');
 const { optionalAuth } = require('../middleware/auth');
 
 /**
@@ -298,6 +299,26 @@ router.post('/', optionalAuth, async (req, res, next) => {
       ]
     );
 
+    await syncToSupabase('products', 'insert', {
+      id,
+      name: name.trim(),
+      category: category.trim(),
+      shop_id: finalShopId,
+      price: numPrice,
+      original_price: numOrigPrice,
+      discount_percent: numDiscount,
+      stock: numStock,
+      rating: productRating,
+      reviews_count: 1,
+      description: description?.trim() || '',
+      attributes: attributes || {},
+      tags: tags || [category.toLowerCase()],
+      image: productImg,
+      is_featured: featuredFlag,
+      is_active: true,
+      moderation_status: 'approved'
+    });
+
     const [created] = await db.query(
       `SELECT p.*, s.name AS shopName, s.area AS shopArea FROM products p LEFT JOIN shops s ON p.shop_id = s.id WHERE p.id = ?`,
       [id]
@@ -445,6 +466,22 @@ router.put('/:id', optionalAuth, async (req, res, next) => {
       [prodId]
     );
 
+    if (updated) {
+      await syncToSupabase('products', 'update', {
+        name: updated.name,
+        category: updated.category,
+        price: Number(updated.price),
+        original_price: updated.original_price ? Number(updated.original_price) : null,
+        discount_percent: updated.discount_percent,
+        stock: updated.stock,
+        description: updated.description,
+        image: updated.image,
+        is_active: Boolean(updated.is_active),
+        is_featured: Boolean(updated.is_featured),
+        updated_at: new Date().toISOString()
+      }, 'id', prodId);
+    }
+
     res.json({
       success: true,
       message: 'Product updated successfully.',
@@ -487,6 +524,7 @@ router.delete('/:id', optionalAuth, async (req, res, next) => {
     }
 
     await db.query('DELETE FROM products WHERE id = ?', [prodId]);
+    await syncToSupabase('products', 'delete', null, 'id', prodId);
     res.json({
       success: true,
       message: `Product "${prodId}" removed from catalog.`

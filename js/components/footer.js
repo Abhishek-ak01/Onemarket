@@ -36,6 +36,7 @@ const Footer = {
                 <li><a href="#budget">Budget Buddy</a></li>
                 <li><a href="#orders">My Orders</a></li>
                 <li><a href="#portal">My Portal</a></li>
+                <li><a href="#inquiry">Contact & Inquiries</a></li>
               </ul>
             </div>
 
