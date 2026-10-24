@@ -73,90 +73,105 @@
   letter-spacing: 0.02em;
 }
 
-/* Nav Links */
+/* Pill Navigation Group */
 .desktop-nav {
   display: flex;
   align-items: center;
 }
 
-.nav-links {
-  display: flex;
-  align-items: center;
-  gap: var(--space-1);
-  list-style: none;
-}
-
-.nav-link {
+.nav-pill-group {
   display: inline-flex;
   align-items: center;
-  gap: var(--space-2);
-  padding: 0.5rem 0.85rem;
-  font-size: var(--font-size-sm);
+  background-color: var(--white);
+  border: 1px solid var(--neutral-300);
+  border-radius: var(--radius-full);
+  padding: 4px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  list-style: none;
+  gap: 2px;
+}
+
+.nav-pill-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0.42rem 0.95rem;
+  font-size: 0.85rem;
   font-weight: 600;
   color: var(--neutral-700);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-full);
   transition: all var(--transition-fast);
   text-decoration: none;
+  white-space: nowrap;
   position: relative;
 }
 
-.nav-link:hover {
-  color: var(--color-primary);
+.nav-pill-item:hover {
+  color: var(--primary-900);
   background-color: var(--primary-50);
 }
 
-.nav-link.active {
-  color: var(--color-primary);
-  background-color: var(--primary-50);
+.nav-pill-item.active {
+  background-color: #a7f3d0;
+  color: #064e3b;
+  font-weight: 700;
+  box-shadow: 0 1px 4px rgba(16, 185, 129, 0.25);
 }
 
-.nav-link:focus-visible {
+.nav-pill-item:focus-visible {
   outline: 2px solid var(--primary-500);
   outline-offset: 2px;
 }
 
-.nav-badge {
+.nav-pill-badge {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 18px;
-  height: 18px;
+  min-width: 20px;
+  height: 20px;
   padding: 0 5px;
   font-size: 11px;
-  font-weight: 700;
+  font-weight: 800;
   border-radius: var(--radius-full);
-  background-color: var(--color-accent);
+  background-color: #064e3b;
   color: var(--white);
   line-height: 1;
+}
+
+.nav-pill-item.active .nav-pill-badge {
+  background-color: #0a1f16;
+  color: #a7f3d0;
 }
 
 /* Header Right Actions */
 .header-actions {
   display: flex;
   align-items: center;
-  gap: var(--space-3);
+  gap: var(--space-2);
   flex-shrink: 0;
 }
 
-/* Demo Location Selector */
+/* Location Selector */
 .location-selector {
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: var(--space-1);
-  background-color: var(--neutral-100);
+  gap: 6px;
+  height: 38px;
+  background-color: var(--white);
   border: 1px solid var(--neutral-300);
   border-radius: var(--radius-full);
-  padding: 0.35rem 0.75rem;
+  padding: 0 12px;
   font-size: var(--font-size-xs);
   font-weight: 600;
   color: var(--neutral-800);
   cursor: pointer;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
   transition: border-color var(--transition-fast), background-color var(--transition-fast);
 }
 
 .location-selector:hover {
   border-color: var(--color-primary);
-  background-color: var(--white);
+  background-color: var(--primary-25);
 }
 
 .location-icon {
@@ -175,66 +190,45 @@
   outline: none;
 }
 
-/* Prototype Mode Switcher Pill */
-.mode-toggle-wrapper {
-  display: inline-flex;
-  background-color: var(--neutral-200);
-  border: 1px solid var(--neutral-300);
-  border-radius: var(--radius-full);
-  padding: 2px;
-  user-select: none;
-}
-
-.mode-toggle-btn {
-  padding: 0.35rem 0.75rem;
-  font-size: var(--font-size-xs);
-  font-weight: 600;
-  border-radius: var(--radius-full);
-  border: none;
-  background: transparent;
-  color: var(--neutral-600);
-  cursor: pointer;
-  transition: all var(--transition-fast);
-}
-
-.mode-toggle-btn.active {
-  background-color: var(--color-primary);
-  color: var(--white);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
-}
-
-.mode-toggle-btn:focus-visible {
-  outline: 2px solid var(--primary-500);
-  outline-offset: 1px;
-}
-
+/* Cart Button */
 .cart-btn-trigger {
   position: relative;
   display: inline-flex;
   align-items: center;
-  gap: var(--space-2);
-  background-color: var(--primary-50);
-  border: 1px solid var(--primary-100);
-  color: var(--color-primary);
+  gap: 8px;
+  height: 38px;
+  background-color: var(--primary-700);
+  border: 1px solid var(--primary-800);
+  color: var(--white);
   border-radius: var(--radius-full);
-  padding: 0.45rem 0.95rem;
-  font-weight: 600;
-  font-size: var(--font-size-sm);
+  padding: 0 14px;
+  font-weight: 700;
+  font-size: 0.85rem;
   cursor: pointer;
   text-decoration: none;
   user-select: none;
+  box-shadow: 0 2px 6px rgba(27, 67, 50, 0.2);
   transition: all var(--transition-fast);
 }
 
 .cart-btn-trigger:hover {
-  background-color: var(--primary-700);
+  background-color: var(--primary-800);
   color: var(--white);
-  border-color: var(--primary-700);
+  transform: translateY(-1px);
 }
 
-.cart-btn-trigger:hover .cart-count-pill {
-  background-color: var(--white);
-  color: var(--primary-700);
+.cart-count-pill {
+  background-color: #a7f3d0;
+  color: #064e3b;
+  border-radius: var(--radius-full);
+  font-size: 11px;
+  font-weight: 800;
+  min-width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 5px;
 }
 
 .cart-btn-trigger:focus-visible {
@@ -242,29 +236,99 @@
   outline-offset: 2px;
 }
 
-.cart-count-pill {
-  background-color: var(--color-primary);
-  color: var(--white);
+/* User Auth Menu & Badges */
+.user-auth-menu {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.user-profile-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 38px;
+  padding: 2px 12px 2px 4px;
   border-radius: var(--radius-full);
-  font-size: 11px;
-  font-weight: 700;
-  min-width: 20px;
-  height: 20px;
+  background-color: var(--primary-50);
+  border: 1px solid var(--primary-100);
+  text-decoration: none;
+  transition: all var(--transition-fast);
+}
+
+.user-profile-badge:hover {
+  background-color: #d8f3dc;
+  border-color: var(--primary-300);
+}
+
+.user-avatar {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background-color: var(--primary-700);
+  color: var(--white);
+  font-weight: 800;
+  font-size: 0.8rem;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 0 4px;
+}
+
+.user-meta {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.1;
+  text-align: left;
+}
+
+.user-name {
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: var(--neutral-900);
+}
+
+.user-role-label {
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: var(--primary-600);
+  text-transform: uppercase;
+}
+
+.header-btn-logout {
+  height: 38px;
+  padding: 0 12px;
+  font-size: 0.8125rem;
+  border-radius: var(--radius-full);
+  border-color: var(--neutral-300);
+  color: var(--neutral-700);
+}
+
+.header-btn-logout:hover {
+  border-color: var(--danger-border);
+  color: var(--danger-text);
+  background-color: var(--danger-bg);
+}
+
+.header-btn-signin {
+  height: 38px;
+  padding: 0 16px;
+  font-size: 0.85rem;
+  border-radius: var(--radius-full);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
 }
 
 /* Mobile Nav Toggle */
 .mobile-nav-toggle {
   display: none;
   background: none;
-  border: none;
+  border: 1px solid var(--neutral-300);
   color: var(--neutral-800);
   cursor: pointer;
-  padding: var(--space-2);
-  border-radius: var(--radius-md);
+  height: 38px;
+  width: 38px;
+  border-radius: var(--radius-full);
   align-items: center;
   justify-content: center;
   transition: background-color var(--transition-fast);
@@ -280,21 +344,38 @@
 }
 
 /* Mobile Link in Drawer */
+.mobile-drawer-dialog {
+  margin: auto 0 0 0;
+  border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+  max-width: 100%;
+  width: 100%;
+}
+
+.mobile-nav-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
 .mobile-link {
   width: 100%;
   padding: 0.75rem 1rem;
   font-size: var(--font-size-base);
-  border-radius: var(--radius-md);
+  font-weight: 600;
+  border-radius: var(--radius-lg);
   color: var(--neutral-800);
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  gap: 10px;
+  text-decoration: none;
+  transition: all var(--transition-fast);
 }
 
 .mobile-link:hover,
 .mobile-link.active {
-  background-color: var(--primary-50);
-  color: var(--color-primary);
+  background-color: #d8f3dc;
+  color: #064e3b;
+  font-weight: 700;
 }
 
 /* --------------------------------------------------------------------------

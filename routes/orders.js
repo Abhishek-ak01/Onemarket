@@ -80,6 +80,9 @@ async function populateOrderDetails(orders) {
     subtotal: Number(order.subtotal || order.total),
     deliveryFee: Number(order.delivery_fee || 0),
     taxes: Number(order.taxes || 0),
+    tokensEarned: parseInt(order.tokens_earned || 0, 10),
+    tokensRedeemed: parseInt(order.tokens_redeemed || 0, 10),
+    tokenDiscount: Number(order.token_discount || 0),
     items: itemsMap[order.id] || [],
     total: Number(order.total),
     status: order.status,
@@ -110,12 +113,12 @@ router.get('/', optionalAuth, async (req, res, next) => {
       params.push(filterShopId.trim());
     }
 
-    if (user_id) {
-      conditions.push('o.user_id = ?');
-      params.push(user_id.trim());
-    } else if (req.user && req.user.role === 'customer' && !filterShopId) {
+    if (req.user && req.user.role === 'customer' && !filterShopId) {
       conditions.push('(o.user_id = ? OR o.customer_phone = ?)');
       params.push(req.user.id, req.user.phone || '');
+    } else if (user_id) {
+      conditions.push('o.user_id = ?');
+      params.push(user_id.trim());
     }
 
     if (customer_phone) {
@@ -223,12 +226,26 @@ router.post('/', optionalAuth, async (req, res, next) => {
       productMap[prod.id] = prod;
     }
 
+    // Consolidate duplicate productId items if any
+    const consolidatedMap = {};
+    for (const item of items) {
+      const pid = item.productId || item.product_id || item.id;
+      if (!pid) continue;
+      const q = parseInt(item.quantity, 10) || 1;
+      if (consolidatedMap[pid]) {
+        consolidatedMap[pid].quantity += q;
+      } else {
+        consolidatedMap[pid] = { ...item, productId: pid, quantity: q };
+      }
+    }
+    const consolidatedItems = Object.values(consolidatedMap);
+
     // Check inventory and calculate true server totals
     let subtotal = 0;
     const validatedItems = [];
 
-    for (const cartItem of items) {
-      const prodId = cartItem.productId || cartItem.product_id || cartItem.id;
+    for (const cartItem of consolidatedItems) {
+      const prodId = cartItem.productId;
       const requestedQty = parseInt(cartItem.quantity, 10);
 
       if (isNaN(requestedQty) || requestedQty <= 0) {
@@ -276,23 +293,47 @@ router.post('/', optionalAuth, async (req, res, next) => {
       });
     }
 
-    // 4. Calculate Final Total (Free delivery over ₹500, else ₹40; 5% taxes)
+    // 4. Loyalty tokens calculation and validation
+    // Configurable reward policy:
+    const REWARD_EARN_RATE = 100; // 1 token earned per ₹100 eligible merchandise spend
+    const REWARD_TOKEN_VALUE = 1.0; // 1 token = ₹1 discount
+    const MAX_REDEEM_PERCENT = 0.5; // Up to 50% of merchandise spend
+
+    const requestedRedeemTokens = parseInt(req.body.tokensToRedeem || req.body.tokens_redeemed || 0, 10);
+    let tokensRedeemed = 0;
+    let tokenDiscount = 0;
+
+    const finalUserId = req.user ? req.user.id : (customer.userId || null);
+
+    if (requestedRedeemTokens > 0 && finalUserId) {
+      const [userRows] = await connection.query('SELECT id, reward_tokens FROM users WHERE id = ? FOR UPDATE', [finalUserId]);
+      if (userRows.length > 0) {
+        const availableTokens = userRows[0].reward_tokens || 0;
+        const maxRedeemTokens = Math.floor((subtotal * MAX_REDEEM_PERCENT) / REWARD_TOKEN_VALUE);
+        tokensRedeemed = Math.min(requestedRedeemTokens, availableTokens, maxRedeemTokens);
+        tokenDiscount = Math.round(tokensRedeemed * REWARD_TOKEN_VALUE * 100) / 100;
+      }
+    }
+
+    // Calculate Final Total (Free delivery over ₹500, else ₹40; 5% taxes)
     const deliveryFee = subtotal > 0 ? (subtotal >= 500 ? 0 : 40) : 0;
-    const taxes = Math.round(subtotal * 0.05 * 100) / 100;
-    const total = Math.round((subtotal + deliveryFee + taxes) * 100) / 100;
+    const taxes = Math.round(Math.max(0, subtotal - tokenDiscount) * 0.05 * 100) / 100;
+    const total = Math.max(0, Math.round((subtotal - tokenDiscount + deliveryFee + taxes) * 100) / 100);
+
+    // Calculate tokens earned for this order
+    const tokensEarned = Math.floor(subtotal / REWARD_EARN_RATE);
 
     // 5. Generate Order ID
     const orderId = req.body.id || `LL-2026-${Math.floor(1000 + Math.random() * 9000)}`;
     const finalAddress = deliveryPref === 'delivery' ? customer.address.trim() : 'Self-Pickup at Store';
     const finalNotes = (notes || customer.notes || '').trim();
-    const finalUserId = req.user ? req.user.id : (customer.userId || null);
     const finalPayMethod = paymentMethod || 'Cash on Delivery (Demo)';
     const finalPayStatus = paymentStatus || (finalPayMethod.includes('UPI') || finalPayMethod.includes('Card') ? 'Demo Payment Successful' : 'Pending');
 
-    // 6. Insert into orders table
+    // 6. Insert into orders table with reward token snapshots
     await connection.query(
-      `INSERT INTO orders (id, user_id, customer_name, customer_phone, customer_address, delivery_preference, payment_method, payment_status, notes, subtotal, delivery_fee, taxes, total, status)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'Pending')`,
+      `INSERT INTO orders (id, user_id, customer_name, customer_phone, customer_address, delivery_preference, payment_method, payment_status, notes, subtotal, delivery_fee, taxes, total, tokens_earned, tokens_redeemed, token_discount, status)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'Pending')`,
       [
         orderId,
         finalUserId,
@@ -306,9 +347,30 @@ router.post('/', optionalAuth, async (req, res, next) => {
         subtotal,
         deliveryFee,
         taxes,
-        total
+        total,
+        tokensEarned,
+        tokensRedeemed,
+        tokenDiscount
       ]
     );
+
+    // Deduct redeemed tokens from user balance & record ledger
+    if (tokensRedeemed > 0 && finalUserId) {
+      await connection.query('UPDATE users SET reward_tokens = GREATEST(0, reward_tokens - ?) WHERE id = ?', [tokensRedeemed, finalUserId]);
+      await connection.query(
+        'INSERT INTO reward_transactions (user_id, order_id, amount, type, description) VALUES (?, ?, ?, "REDEEMED", ?)',
+        [finalUserId, orderId, -tokensRedeemed, `Redeemed ${tokensRedeemed} OneMarket tokens on Order #${orderId}`]
+      );
+    }
+
+    // Award earned tokens & record ledger
+    if (tokensEarned > 0 && finalUserId) {
+      await connection.query('UPDATE users SET reward_tokens = reward_tokens + ? WHERE id = ?', [tokensEarned, finalUserId]);
+      await connection.query(
+        'INSERT INTO reward_transactions (user_id, order_id, amount, type, description) VALUES (?, ?, ?, "EARNED", ?)',
+        [finalUserId, orderId, tokensEarned, `Earned ${tokensEarned} OneMarket tokens for order #${orderId}`]
+      );
+    }
 
     // 7. Insert Order Items (with image snapshot and original price/discount) & 8. Decrement stock
     for (const item of validatedItems) {
@@ -370,16 +432,12 @@ router.post('/', optionalAuth, async (req, res, next) => {
 });
 
 /**
- * PATCH /api/orders/:id/status
- * Updates order fulfilment status with audit trail and inventory restoration on cancellation
+ * Handle cancellation and status updates securely
  */
-router.patch('/:id/status', optionalAuth, async (req, res, next) => {
+async function processOrderStatusUpdate(orderId, status, note, reason, user) {
   const connection = await db.getConnection();
 
   try {
-    const { status, note, reason } = req.body;
-    const orderId = req.params.id;
-
     const VALID_STATUSES = [
       'Pending',
       'Confirmed',
@@ -395,10 +453,7 @@ router.patch('/:id/status', optionalAuth, async (req, res, next) => {
     ];
 
     if (!status || !VALID_STATUSES.includes(status)) {
-      return res.status(400).json({
-        success: false,
-        message: `Invalid status "${status}". Allowed values: ${VALID_STATUSES.join(', ')}`
-      });
+      throw { status: 400, message: `Invalid status "${status}". Allowed values: ${VALID_STATUSES.join(', ')}` };
     }
 
     await connection.beginTransaction();
@@ -406,12 +461,34 @@ router.patch('/:id/status', optionalAuth, async (req, res, next) => {
     const [orders] = await connection.query('SELECT * FROM orders WHERE id = ? FOR UPDATE', [orderId]);
     if (orders.length === 0) {
       await connection.rollback();
-      return res.status(404).json({ success: false, message: `Order "${orderId}" not found.` });
+      throw { status: 404, message: `Order "${orderId}" not found.` };
     }
 
     const currentOrder = orders[0];
 
-    // If order is transitioning to Cancelled or Rejected from an active state, restore inventory
+    // Ownership check if customer is cancelling
+    if (status === 'Cancelled' && user && user.role === 'customer') {
+      const isOwner = (currentOrder.user_id === user.id) ||
+                      (user.phone && currentOrder.customer_phone === user.phone);
+      if (!isOwner) {
+        await connection.rollback();
+        throw { status: 403, message: 'You are not authorized to cancel an order belonging to another customer.' };
+      }
+    }
+
+    // Cancellation eligibility check
+    if (status === 'Cancelled') {
+      const NON_CANCELLABLE = ['Shipped', 'Out for Delivery', 'Delivered', 'Completed', 'Cancelled', 'Rejected'];
+      if (NON_CANCELLABLE.includes(currentOrder.status)) {
+        await connection.rollback();
+        throw {
+          status: 400,
+          message: `Cannot cancel Order #${orderId}. Current status is "${currentOrder.status}". Orders that are already shipped, out for delivery, or completed cannot be cancelled directly.`
+        };
+      }
+    }
+
+    // If order is transitioning to Cancelled or Rejected from an active state, restore inventory exactly once
     const isCancelling = (status === 'Cancelled' || status === 'Rejected') &&
                          currentOrder.status !== 'Cancelled' &&
                          currentOrder.status !== 'Rejected';
@@ -421,6 +498,24 @@ router.patch('/:id/status', optionalAuth, async (req, res, next) => {
       for (const it of items) {
         await connection.query('UPDATE products SET stock = stock + ? WHERE id = ?', [it.quantity, it.product_id]);
       }
+
+      // Reverse earned tokens and refund redeemed tokens in database
+      if (currentOrder.user_id) {
+        if (currentOrder.tokens_earned > 0) {
+          await connection.query('UPDATE users SET reward_tokens = GREATEST(0, reward_tokens - ?) WHERE id = ?', [currentOrder.tokens_earned, currentOrder.user_id]);
+          await connection.query(
+            'INSERT INTO reward_transactions (user_id, order_id, amount, type, description) VALUES (?, ?, ?, "CANCELLED_REVERSAL", ?)',
+            [currentOrder.user_id, orderId, -currentOrder.tokens_earned, `Reversal of ${currentOrder.tokens_earned} tokens earned on cancelled Order #${orderId}`]
+          );
+        }
+        if (currentOrder.tokens_redeemed > 0) {
+          await connection.query('UPDATE users SET reward_tokens = reward_tokens + ? WHERE id = ?', [currentOrder.tokens_redeemed, currentOrder.user_id]);
+          await connection.query(
+            'INSERT INTO reward_transactions (user_id, order_id, amount, type, description) VALUES (?, ?, ?, "REFUND", ?)',
+            [currentOrder.user_id, orderId, currentOrder.tokens_redeemed, `Refund of ${currentOrder.tokens_redeemed} tokens redeemed on cancelled Order #${orderId}`]
+          );
+        }
+      }
     }
 
     await connection.query(
@@ -428,7 +523,7 @@ router.patch('/:id/status', optionalAuth, async (req, res, next) => {
       [status, orderId]
     );
 
-    const auditNote = note || reason || `Status changed from ${currentOrder.status} to ${status}`;
+    const auditNote = note || reason || (status === 'Cancelled' ? 'Order cancelled by customer.' : `Status changed from ${currentOrder.status} to ${status}`);
     await connection.query(
       'INSERT INTO order_status_history (order_id, status, `timestamp`, note) VALUES (?, ?, CURRENT_TIMESTAMP, ?)',
       [orderId, status, auditNote]
@@ -439,16 +534,53 @@ router.patch('/:id/status', optionalAuth, async (req, res, next) => {
     const [updated] = await db.query('SELECT * FROM orders WHERE id = ?', [orderId]);
     const [formatted] = await populateOrderDetails([updated]);
 
-    res.json({
+    return {
       success: true,
       message: `Order #${orderId} status updated to "${status}".`,
       order: formatted
-    });
+    };
   } catch (err) {
     await connection.rollback();
-    next(err);
+    throw err;
   } finally {
     connection.release();
+  }
+}
+
+/**
+ * PATCH /api/orders/:id/status
+ * Updates order fulfilment status with audit trail and inventory restoration on cancellation
+ */
+router.patch('/:id/status', optionalAuth, async (req, res, next) => {
+  try {
+    const { status, note, reason } = req.body;
+    const result = await processOrderStatusUpdate(req.params.id, status, note, reason, req.user);
+    res.json(result);
+  } catch (err) {
+    if (err.status) {
+      return res.status(err.status).json({ success: false, message: err.message });
+    }
+    next(err);
+  }
+});
+
+/**
+ * POST /api/orders/:id/cancel
+ * Dedicated customer order cancellation endpoint with inventory restoration and token refund
+ */
+router.post('/:id/cancel', optionalAuth, async (req, res, next) => {
+  try {
+    const reason = req.body.reason || req.body.note || 'Cancelled by customer.';
+    const result = await processOrderStatusUpdate(req.params.id, 'Cancelled', reason, reason, req.user);
+    res.json({
+      ...result,
+      message: `Order #${req.params.id} has been cancelled successfully. Any reserved inventory and reward tokens have been safely restored.`
+    });
+  } catch (err) {
+    if (err.status) {
+      return res.status(err.status).json({ success: false, message: err.message });
+    }
+    next(err);
   }
 });
 

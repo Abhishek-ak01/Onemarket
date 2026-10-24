@@ -210,6 +210,7 @@ router.post('/login', async (req, res, next) => {
       email: userRecord.email,
       phone: userRecord.phone,
       role: userRecord.role,
+      reward_tokens: userRecord.reward_tokens || 0,
       shop_id: userRecord.shop_id,
       address: userRecord.address,
       city: userRecord.city,
@@ -236,7 +237,7 @@ router.post('/login', async (req, res, next) => {
  */
 router.get('/me', requireAuth, async (req, res, next) => {
   try {
-    const rows = await query('SELECT id, name, email, phone, role, shop_id, address, city, pincode, created_at FROM users WHERE id = ?', [req.user.id]);
+    const rows = await query('SELECT id, name, email, phone, role, reward_tokens, shop_id, address, city, pincode, created_at FROM users WHERE id = ?', [req.user.id]);
     if (rows.length === 0) {
       return res.status(404).json({ success: false, error: 'UserNotFound', message: 'User not found.' });
     }
@@ -252,7 +253,39 @@ router.get('/me', requireAuth, async (req, res, next) => {
       success: true,
       user: {
         ...user,
+        reward_tokens: user.reward_tokens || 0,
         shop
+      }
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+/**
+ * GET /api/auth/rewards
+ * Retrieves customer's reward tokens balance and full transaction ledger
+ */
+router.get('/rewards', requireAuth, async (req, res, next) => {
+  try {
+    const [user] = await query('SELECT id, name, reward_tokens FROM users WHERE id = ?', [req.user.id]);
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found.' });
+    }
+
+    const transactions = await query(
+      'SELECT id, order_id as orderId, amount, type, description, created_at as createdAt FROM reward_transactions WHERE user_id = ? ORDER BY id DESC',
+      [req.user.id]
+    );
+
+    res.json({
+      success: true,
+      data: {
+        balance: user.reward_tokens || 0,
+        conversionRate: 1, // 1 token = ₹1
+        earnRate: '1 token per ₹100 eligible spend',
+        maxRedeemPercentage: 50, // max 50% of subtotal can be redeemed
+        transactions
       }
     });
   } catch (err) {

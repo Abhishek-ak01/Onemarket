@@ -41,9 +41,6 @@ const SellerView = {
                 <button type="button" class="btn btn-outline btn-lg" id="btn-seller-auth-register">
                   Register New Shop
                 </button>
-                <button type="button" class="btn btn-lg" id="btn-seller-evaluator-demo" style="background: #047857; color: white; border: none; font-weight: 700;">
-                  ⚡ 1-Click Demo Seller (Malabar Spices)
-                </button>
               </div>
             </div>
           </div>

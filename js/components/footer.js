@@ -20,9 +20,9 @@ const Footer = {
               <p style="color: var(--neutral-400); font-size: var(--font-size-sm); margin-bottom: var(--space-4); line-height: 1.6;">
                 Your city. Your shops. One local marketplace. Empowering independent neighbourhood retailers across Hubballi and connecting residents with authentic local products.
               </p>
-              <div class="footer-badge-hackathon">
-                <span>CODEFEST 2026</span>
-                <span>• Full-Stack Hyperlocal Entry</span>
+              <div style="display: inline-flex; align-items: center; gap: 8px; background: rgba(255,255,255,0.08); padding: 4px 12px; border-radius: var(--radius-full); font-size: 0.75rem; color: #a7f3d0;">
+                <span>Hubballi Hyperlocal Commerce</span>
+                <span>• Karnataka, India</span>
               </div>
             </div>
 
@@ -32,9 +32,10 @@ const Footer = {
               <ul class="footer-links">
                 <li><a href="#home">Home</a></li>
                 <li><a href="#catalog">Explore All Products</a></li>
-                <li><a href="#compare">Smart Comparison</a></li>
+                <li><a href="#compare">Compare Local Prices</a></li>
                 <li><a href="#budget">Budget Buddy</a></li>
-                <li><a href="#orders">Customer Order History</a></li>
+                <li><a href="#orders">My Orders</a></li>
+                <li><a href="#portal">My Portal</a></li>
               </ul>
             </div>
 
@@ -54,13 +55,13 @@ const Footer = {
 
             <!-- Col 4: Merchant & Technical Architecture -->
             <div>
-              <h4 class="footer-col-title">For Local Sellers</h4>
+              <h4 class="footer-col-title">Merchant & Portals</h4>
               <ul class="footer-links">
+                <li><a href="#portal">My Portal (Customer & Merchant)</a></li>
                 <li><a href="#seller">Merchant Dashboard</a></li>
                 <li><a href="#seller?tab=products">Product Catalog Management</a></li>
                 <li><a href="#seller?tab=orders">Order Fulfillment & Stock</a></li>
-                <li><a href="#seller?tab=analytics">Session Sales Insights</a></li>
-                <li><a href="#about">Architecture & REST API</a></li>
+                <li><a href="#seller?tab=analytics">Sales Analytics</a></li>
               </ul>
             </div>
 
@@ -69,10 +70,10 @@ const Footer = {
           <!-- Bottom Bar -->
           <div class="footer-bottom">
             <div>
-              © 2026 OneMarket • CODEFEST 2026 Prototype. Built with HTML5, CSS3, Express.js & MySQL.
+              © 2026 OneMarket • Hyperlocal Neighbourhood Marketplace. Hubballi, Karnataka.
             </div>
             <div>
-              <span>Demo prototype • Hubballi, Karnataka • No real monetary transactions.</span>
+              <span>Connecting independent local retailers with neighbourhood customers.</span>
             </div>
           </div>
         </div>

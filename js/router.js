@@ -14,6 +14,7 @@ const Router = {
     'cart': CartView,
     'orders': OrdersView,
     'seller': SellerView,
+    'portal': PortalView,
     'store': StorefrontView,
     'shop': StorefrontView,
     'about': AboutView
@@ -96,6 +97,11 @@ const Router = {
         initCallback = () => SellerView.initListeners();
         break;
 
+      case 'portal':
+        viewHtml = PortalView.render(queryParams);
+        initCallback = () => PortalView.initListeners();
+        break;
+
       case 'store':
       case 'shop':
         viewHtml = StorefrontView.render(param);
@@ -110,7 +116,9 @@ const Router = {
       case 'home':
       default:
         viewHtml = HomeView.render();
-        initCallback = () => {};
+        initCallback = () => {
+          if (typeof HomeView.initListeners === 'function') HomeView.initListeners();
+        };
         break;
     }
 

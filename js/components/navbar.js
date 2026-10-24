@@ -1,14 +1,19 @@
 /**
- * LocalLoop - Navigation Bar Component
- * Top demo banner, brand logo, navigation links with active states,
- * location selector, user profile / auth button, and cart counter badge.
+ * OneMarket - Navigation Bar Component
+ * Fresh pill-style navigation matching the forest-green and mint-green brand identity.
+ * Features:
+ * - Brand logo & tagline
+ * - Pill-style navigation links: Home, Explore Products, Compare, Budget Buddy, My Orders, My Portal
+ * - Hubballi location selector
+ * - Cart button with live count pill
+ * - Authenticated customer / seller account status & sign out
+ * - Responsive mobile navigation drawer
  */
 
 const Navbar = {
   render(activeRoute = 'home') {
     const locations = Store.getLocations();
     const selectedLocation = Store.getSelectedLocation();
-    const mode = Store.getMode();
     const cartSummary = Store.getCartSummary();
     const compareList = Store.getCompareList();
     const orders = Store.getOrders();
@@ -17,38 +22,16 @@ const Navbar = {
     const compareCount = compareList.length;
     const ordersCount = orders.length;
 
-    return `
-      <!-- Top Demo Banner & Quick Evaluator Switcher -->
-      <aside class="demo-pill-banner" aria-label="Demo Prototype Information">
-        <div class="container" style="display: flex; align-items: center; justify-content: space-between; width: 100%; flex-wrap: wrap; gap: 8px;">
-          <div style="display: flex; align-items: center; gap: 8px;">
-            <span class="demo-pill-badge">CODEFEST 2026</span>
-            &nbsp;<strong>OneMarket</strong> — Hyperlocal Neighbourhood Marketplace • Hubballi
-          </div>
-          <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
-            <span style="font-size: 0.72rem; color: #a7f3d0; font-weight: 600;">EVALUATOR SHORTCUT:</span>
-            <button type="button" class="btn btn-xs" id="quick-switch-guest" style="padding: 2px 8px; font-size: 0.7rem; font-weight: 700; background: ${!currentUser ? '#059669' : 'rgba(255,255,255,0.15)'}; color: #ffffff; border: 1px solid rgba(255,255,255,0.2); border-radius: 4px; cursor: pointer;">
-              Guest Mode
-            </button>
-            <button type="button" class="btn btn-xs" id="quick-switch-cust" style="padding: 2px 8px; font-size: 0.7rem; font-weight: 700; background: ${currentUser?.role === 'customer' ? '#059669' : 'rgba(255,255,255,0.15)'}; color: #ffffff; border: 1px solid rgba(255,255,255,0.2); border-radius: 4px; cursor: pointer;">
-              Customer (Aditi)
-            </button>
-            <button type="button" class="btn btn-xs" id="quick-switch-sell" style="padding: 2px 8px; font-size: 0.7rem; font-weight: 700; background: ${currentUser?.role === 'seller' ? '#059669' : 'rgba(255,255,255,0.15)'}; color: #ffffff; border: 1px solid rgba(255,255,255,0.2); border-radius: 4px; cursor: pointer;">
-              Seller (Malabar)
-            </button>
-            <button type="button" class="demo-reset-link" id="btn-reset-demo-header" title="Reset all demo edits back to seed data" style="margin-left: 6px;">
-              ${Utils.icons.refresh} Reset Data
-            </button>
-          </div>
-        </div>
-      </aside>
+    // Check if portal is active
+    const isPortalActive = activeRoute === 'portal' || activeRoute.startsWith('seller');
 
+    return `
       <!-- Main Navigation Header -->
       <header class="app-header" id="app-header">
-        <div class="container">
+        <div class="container header-container">
           <div class="header-inner">
             
-            <!-- Brand Logo -->
+            <!-- Brand Logo & Tagline -->
             <a href="#home" class="brand-wrapper" aria-label="OneMarket Home">
               <div class="brand-logo-icon">
                 ${Utils.icons.logo}
@@ -59,39 +42,39 @@ const Navbar = {
               </div>
             </a>
 
-            <!-- Desktop Navigation Links -->
+            <!-- Desktop Pill Navigation Menu -->
             <nav class="desktop-nav" aria-label="Main Navigation">
-              <ul class="nav-links">
+              <ul class="nav-pill-group">
                 <li>
-                  <a href="#home" class="nav-link ${activeRoute === 'home' ? 'active' : ''}">
+                  <a href="#home" class="nav-pill-item ${activeRoute === 'home' ? 'active' : ''}">
                     Home
                   </a>
                 </li>
                 <li>
-                  <a href="#catalog" class="nav-link ${activeRoute === 'catalog' ? 'active' : ''}">
+                  <a href="#catalog" class="nav-pill-item ${activeRoute === 'catalog' ? 'active' : ''}">
                     Explore Products
                   </a>
                 </li>
                 <li>
-                  <a href="#compare" class="nav-link ${activeRoute === 'compare' ? 'active' : ''}">
+                  <a href="#compare" class="nav-pill-item ${activeRoute === 'compare' ? 'active' : ''}">
                     Compare
-                    ${compareCount > 0 ? `<span class="nav-badge" id="nav-compare-count">${compareCount}</span>` : ''}
+                    ${compareCount > 0 ? `<span class="nav-pill-badge" id="nav-compare-count">${compareCount}</span>` : ''}
                   </a>
                 </li>
                 <li>
-                  <a href="#budget" class="nav-link ${activeRoute === 'budget' ? 'active' : ''}">
+                  <a href="#budget" class="nav-pill-item ${activeRoute === 'budget' ? 'active' : ''}">
                     Budget Buddy
                   </a>
                 </li>
                 <li>
-                  <a href="#orders" class="nav-link ${activeRoute === 'orders' ? 'active' : ''}">
+                  <a href="#orders" class="nav-pill-item ${activeRoute === 'orders' ? 'active' : ''}">
                     My Orders
-                    ${ordersCount > 0 ? `<span class="nav-badge" id="nav-orders-count">${ordersCount}</span>` : ''}
+                    ${ordersCount > 0 ? `<span class="nav-pill-badge" id="nav-orders-count">${ordersCount}</span>` : ''}
                   </a>
                 </li>
                 <li>
-                  <a href="#seller" class="nav-link ${activeRoute.startsWith('seller') ? 'active' : ''}">
-                    Seller Portal
+                  <a href="#portal" class="nav-pill-item ${isPortalActive ? 'active' : ''}">
+                    My Portal
                   </a>
                 </li>
               </ul>
@@ -100,10 +83,10 @@ const Navbar = {
             <!-- Header Right Actions -->
             <div class="header-actions">
               
-              <!-- Demo Location Selector -->
-              <div class="location-selector" title="Select demo neighbourhood in Hubballi">
+              <!-- Hubballi Location Selector -->
+              <div class="location-selector" title="Selected neighbourhood in Hubballi">
                 <span class="location-icon">${Utils.icons.mapPin}</span>
-                <select id="header-location-select" class="location-select" aria-label="Select demo neighbourhood in Hubballi">
+                <select id="header-location-select" class="location-select" aria-label="Select neighbourhood in Hubballi">
                   ${locations.map(loc => `
                     <option value="${loc.id}" ${loc.id === selectedLocation.id ? 'selected' : ''}>
                       ${Utils.escapeHTML(loc.name.split(',')[0])}
@@ -115,28 +98,29 @@ const Navbar = {
               <!-- Shopping Cart Button Trigger -->
               <a href="#cart" class="cart-btn-trigger" id="cart-button-trigger" aria-label="View Shopping Cart">
                 ${Utils.icons.cart}
-                <span class="cart-label" style="font-weight: 700;">Cart</span>
+                <span class="cart-label">Cart</span>
                 <span class="cart-count-pill" id="header-cart-count">${cartSummary.count}</span>
               </a>
 
-              <!-- Authentication / User Profile Button -->
+              <!-- User Account / Sign In -->
               ${currentUser ? `
-                <div class="user-auth-menu" style="display: flex; align-items: center; gap: 8px;">
-                  <div style="display: flex; flex-direction: column; align-items: flex-end; line-height: 1.2;">
-                    <span style="font-weight: 700; font-size: 0.85rem; color: var(--neutral-900);">
-                      ${Utils.escapeHTML(currentUser.name)}
-                    </span>
-                    <span style="font-size: 0.68rem; color: var(--primary-700); font-weight: 700; text-transform: uppercase;">
-                      ${currentUser.role === 'seller' ? (currentUser.shop?.name || 'Seller') : 'Customer'}
-                    </span>
-                  </div>
-                  <button type="button" class="btn btn-sm btn-outline" id="btn-header-logout" title="Sign out" style="padding: 4px 10px; font-size: 0.75rem;">
+                <div class="user-auth-menu">
+                  <a href="#portal" class="user-profile-badge" title="Open My Portal">
+                    <span class="user-avatar">${currentUser.name ? currentUser.name.charAt(0).toUpperCase() : 'U'}</span>
+                    <div class="user-meta">
+                      <span class="user-name">${Utils.escapeHTML(currentUser.name)}</span>
+                      <span class="user-role-label">
+                        ${currentUser.role === 'seller' ? (currentUser.shop?.name || 'Merchant') : 'Customer'}
+                      </span>
+                    </div>
+                  </a>
+                  <button type="button" class="btn btn-sm btn-outline header-btn-logout" id="btn-header-logout" title="Sign out">
                     Sign Out
                   </button>
                 </div>
               ` : `
-                <button type="button" class="btn btn-sm btn-primary" id="btn-header-login" style="padding: 6px 14px; font-size: 0.85rem; display: inline-flex; align-items: center; gap: 6px;">
-                  ${Utils.icons.user || '👤'} Sign In
+                <button type="button" class="btn btn-sm btn-primary header-btn-signin" id="btn-header-login">
+                  ${Utils.icons.user || '👤'} <span>Sign In</span>
                 </button>
               `}
 
@@ -153,24 +137,50 @@ const Navbar = {
 
       <!-- Mobile Navigation Drawer -->
       <div id="mobile-nav-drawer" class="modal-backdrop" style="display: none;">
-        <div class="modal-dialog modal-sm" style="margin: auto 0 0 0; border-radius: var(--radius-xl) var(--radius-xl) 0 0;">
+        <div class="modal-dialog modal-sm mobile-drawer-dialog">
           <div class="modal-header">
-            <h3 class="modal-title">OneMarket Navigation</h3>
-            <button class="modal-close-btn" id="mobile-nav-close">${Utils.icons.close}</button>
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <div class="brand-logo-icon" style="width: 30px; height: 30px;">
+                ${Utils.icons.logo}
+              </div>
+              <h3 class="modal-title" style="font-size: 1.15rem; font-weight: 800; color: var(--primary-900);">OneMarket</h3>
+            </div>
+            <button class="modal-close-btn" id="mobile-nav-close" aria-label="Close navigation">${Utils.icons.close}</button>
           </div>
           <div class="modal-body" style="padding: var(--space-4);">
-            <div style="display: flex; flex-direction: column; gap: var(--space-2);">
-              <a href="#home" class="nav-link mobile-link">Home</a>
-              <a href="#catalog" class="nav-link mobile-link">Explore Products</a>
-              <a href="#compare" class="nav-link mobile-link">
-                Compare Products ${compareCount > 0 ? `(${compareCount})` : ''}
+            <div class="mobile-nav-list">
+              <a href="#home" class="mobile-link ${activeRoute === 'home' ? 'active' : ''}">
+                ${Utils.icons.home || '🏠'} Home
               </a>
-              <a href="#budget" class="nav-link mobile-link">Budget Buddy</a>
-              <a href="#orders" class="nav-link mobile-link">
-                My Orders ${ordersCount > 0 ? `(${ordersCount})` : ''}
+              <a href="#catalog" class="mobile-link ${activeRoute === 'catalog' ? 'active' : ''}">
+                ${Utils.icons.search || '🔍'} Explore Products
               </a>
-              <a href="#seller" class="nav-link mobile-link">Seller Dashboard</a>
-              <a href="#about" class="nav-link mobile-link">About / Hackathon Notes</a>
+              <a href="#compare" class="mobile-link ${activeRoute === 'compare' ? 'active' : ''}">
+                ${Utils.icons.compare || '⚖️'} Compare Products ${compareCount > 0 ? `<span class="nav-pill-badge">${compareCount}</span>` : ''}
+              </a>
+              <a href="#budget" class="mobile-link ${activeRoute === 'budget' ? 'active' : ''}">
+                ${Utils.icons.wallet || '💰'} Budget Buddy
+              </a>
+              <a href="#orders" class="mobile-link ${activeRoute === 'orders' ? 'active' : ''}">
+                ${Utils.icons.box || '📦'} My Orders ${ordersCount > 0 ? `<span class="nav-pill-badge">${ordersCount}</span>` : ''}
+              </a>
+              <a href="#portal" class="mobile-link ${isPortalActive ? 'active' : ''}">
+                ${Utils.icons.user || '👤'} My Portal
+              </a>
+              <div style="margin-top: var(--space-4); padding-top: var(--space-4); border-top: 1px solid var(--neutral-200);">
+                ${currentUser ? `
+                  <div style="margin-bottom: var(--space-3); font-size: 0.85rem; color: var(--neutral-700);">
+                    Signed in as <strong>${Utils.escapeHTML(currentUser.name)}</strong> (${currentUser.role})
+                  </div>
+                  <button type="button" class="btn btn-outline btn-block" id="btn-mobile-logout">
+                    Sign Out
+                  </button>
+                ` : `
+                  <button type="button" class="btn btn-primary btn-block" id="btn-mobile-login">
+                    Sign In to OneMarket
+                  </button>
+                `}
+              </div>
             </div>
           </div>
         </div>
@@ -189,78 +199,31 @@ const Navbar = {
       });
     }
 
-    // Login button trigger
+    // Login button triggers (desktop & mobile)
     const loginBtn = document.getElementById('btn-header-login');
-    if (loginBtn) {
-      loginBtn.addEventListener('click', () => {
-        if (typeof AuthModal !== 'undefined') {
-          AuthModal.open({ tab: 'customer-login' });
-        }
-      });
-    }
-
-    // Logout button trigger
-    const logoutBtn = document.getElementById('btn-header-logout');
-    if (logoutBtn) {
-      logoutBtn.addEventListener('click', () => {
-        Store.logout();
-        Utils.showToast('You have been signed out successfully.', 'info');
-        App.renderCurrentRoute();
-      });
-    }
-
-    // Evaluator Shortcut Buttons
-    const guestSwitch = document.getElementById('quick-switch-guest');
-    if (guestSwitch) {
-      guestSwitch.addEventListener('click', () => {
-        Store.logout();
-        Utils.showToast('Switched to Guest Browsing Mode. Cart & checkout are restricted.', 'info');
-        App.renderCurrentRoute();
-      });
-    }
-
-    const custSwitch = document.getElementById('quick-switch-cust');
-    if (custSwitch) {
-      custSwitch.addEventListener('click', async () => {
-        const res = await Store.login('customer@localloop.in', 'Customer@123');
-        if (res.success) {
-          Utils.showToast(`Active Account: Demo Customer (${res.user.name})`, 'success');
+    const mobileLoginBtn = document.getElementById('btn-mobile-login');
+    const openLogin = () => {
+      if (typeof AuthModal !== 'undefined') {
+        AuthModal.open('customer', 'login', () => {
           App.renderCurrentRoute();
-        }
-      });
-    }
-
-    const sellSwitch = document.getElementById('quick-switch-sell');
-    if (sellSwitch) {
-      sellSwitch.addEventListener('click', async () => {
-        const res = await Store.login('seller@malabarspices.in', 'Seller@123');
-        if (res.success) {
-          Utils.showToast(`Active Account: Demo Seller (${res.user.shop ? res.user.shop.name : res.user.name})`, 'success');
-          window.location.hash = '#seller';
-          App.renderCurrentRoute();
-        }
-      });
-    }
-
-    // Reset Demo Data Button
-    const resetBtn = document.getElementById('btn-reset-demo-header');
-    if (resetBtn) {
-      resetBtn.addEventListener('click', () => {
-        Utils.confirmDialog({
-          title: 'Reset OneMarket Demo Data?',
-          message: 'This will safely clear test orders, shopping carts, and restore product stock back to baseline seed state without deleting user accounts or modifying schemas.',
-          confirmText: 'Reset Demo Data',
-          confirmStyle: 'danger',
-          onConfirm: async () => {
-            const res = await Store.resetDemoData();
-            Utils.showToast(res.message || 'OneMarket demo data restored to baseline state!', 'success');
-            App.renderCurrentRoute();
-          }
         });
-      });
-    }
+      }
+    };
+    if (loginBtn) loginBtn.addEventListener('click', openLogin);
+    if (mobileLoginBtn) mobileLoginBtn.addEventListener('click', openLogin);
 
-    // Mobile nav toggle
+    // Logout button triggers (desktop & mobile)
+    const logoutBtn = document.getElementById('btn-header-logout');
+    const mobileLogoutBtn = document.getElementById('btn-mobile-logout');
+    const doLogout = () => {
+      Store.logout();
+      Utils.showToast('You have been signed out successfully.', 'info');
+      App.renderCurrentRoute();
+    };
+    if (logoutBtn) logoutBtn.addEventListener('click', doLogout);
+    if (mobileLogoutBtn) mobileLogoutBtn.addEventListener('click', doLogout);
+
+    // Mobile nav drawer controls
     const mobileToggle = document.getElementById('mobile-nav-toggle');
     const mobileDrawer = document.getElementById('mobile-nav-drawer');
     const mobileClose = document.getElementById('mobile-nav-close');

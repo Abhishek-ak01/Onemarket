@@ -148,6 +148,18 @@ const Store = (() => {
     }
   }
 
+  function saveUser() {
+    try {
+      if (state.currentUser) {
+        localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(state.currentUser));
+      } else {
+        localStorage.removeItem(STORAGE_KEYS.USER);
+      }
+    } catch (e) {
+      console.error('Failed to save user to localStorage', e);
+    }
+  }
+
   // Reset to initial demo seed
   function resetDemoData() {
     state.products = JSON.parse(JSON.stringify(INITIAL_PRODUCTS));
@@ -938,9 +950,21 @@ const Store = (() => {
         };
       });
 
+      const requestedTokens = parseInt(orderPayload.tokensToRedeem || 0, 10);
+      let tokensRedeemed = 0;
+      let tokenDiscount = 0;
+      if (requestedTokens > 0 && state.currentUser && (state.currentUser.reward_tokens || 0) > 0) {
+        const available = state.currentUser.reward_tokens || 0;
+        const maxTokens = Math.floor(calculatedSubtotal * 0.5); // max 50% discount
+        tokensRedeemed = Math.min(requestedTokens, available, maxTokens);
+        tokenDiscount = tokensRedeemed; // 1 token = ₹1
+      }
+
       const deliveryFee = calculatedSubtotal > 0 ? (calculatedSubtotal >= 500 ? 0 : 40) : 0;
-      const taxes = Math.round(calculatedSubtotal * 0.05 * 100) / 100;
-      const grandTotal = Math.round((calculatedSubtotal + deliveryFee + taxes) * 100) / 100;
+      const taxableAmount = Math.max(0, calculatedSubtotal - tokenDiscount);
+      const taxes = Math.round(taxableAmount * 0.05 * 100) / 100;
+      const grandTotal = Math.max(0, Math.round((calculatedSubtotal - tokenDiscount + deliveryFee + taxes) * 100) / 100);
+      const tokensEarned = Math.floor(calculatedSubtotal / 100);
 
       const newOrder = {
         id: orderPayload.id || `LL-2026-${Math.floor(1000 + Math.random() * 9000)}`,
@@ -958,6 +982,9 @@ const Store = (() => {
         subtotal: calculatedSubtotal,
         deliveryFee,
         taxes,
+        tokensEarned,
+        tokensRedeemed,
+        tokenDiscount,
         items: orderItems,
         total: grandTotal,
         status: 'Pending',
@@ -965,6 +992,18 @@ const Store = (() => {
           { status: 'Confirmed', timestamp: new Date().toISOString(), note: 'Order confirmed with merchant.' }
         ]
       };
+
+      // Update local loyalty token balance if customer logged in
+      if (state.currentUser && state.currentUser.reward_tokens !== undefined) {
+        if (tokensRedeemed > 0) {
+          state.currentUser.reward_tokens = Math.max(0, state.currentUser.reward_tokens - tokensRedeemed);
+        }
+        if (tokensEarned > 0) {
+          state.currentUser.reward_tokens = (state.currentUser.reward_tokens || 0) + tokensEarned;
+        }
+        saveUser();
+        emit('user:changed', state.currentUser);
+      }
 
       state.orders.unshift(newOrder);
       saveOrders();
@@ -988,7 +1027,8 @@ const Store = (() => {
             items: newOrder.items,
             notes: newOrder.customer.notes,
             paymentMethod: newOrder.paymentMethod,
-            paymentStatus: newOrder.paymentStatus
+            paymentStatus: newOrder.paymentStatus,
+            tokensToRedeem: tokensRedeemed
           })
         })
         .then(r => r.ok ? r.json() : null)
@@ -1018,6 +1058,137 @@ const Store = (() => {
       }
 
       return { success: true, order: newOrder };
+    },
+
+    /**
+     * Cancel an eligible order, restoring inventory and reward tokens
+     */
+    async cancelOrder(orderId, reason = 'Cancelled by customer.') {
+      const order = state.orders.find(o => o.id === orderId);
+      if (!order) return { success: false, message: 'Order not found.' };
+
+      const nonCancellable = ['Shipped', 'Out for Delivery', 'Delivered', 'Completed', 'Cancelled', 'Rejected'];
+      if (nonCancellable.includes(order.status)) {
+        return {
+          success: false,
+          message: `Cannot cancel Order #${orderId}. Current status is "${order.status}". Orders that are in transit or completed cannot be cancelled directly.`
+        };
+      }
+
+      // Check ownership if logged in as customer
+      if (state.currentUser && state.currentUser.role === 'customer') {
+        const isOwner = (order.userId === state.currentUser.id) ||
+                        (order.customer && order.customer.phone === state.currentUser.phone);
+        if (!isOwner && order.userId) {
+          return { success: false, message: 'You are not authorized to cancel an order belonging to another customer.' };
+        }
+      }
+
+      let apiSuccess = false;
+      let apiMsg = '';
+      if (typeof fetch !== 'undefined') {
+        try {
+          const headers = { 'Content-Type': 'application/json' };
+          if (state.authToken) headers['Authorization'] = `Bearer ${state.authToken}`;
+          const res = await fetch(this.getApiUrl(`/api/orders/${orderId}/cancel`), {
+            method: 'POST',
+            headers,
+            body: JSON.stringify({ reason })
+          });
+          const data = await res.json();
+          if (res.ok && data.success) {
+            apiSuccess = true;
+            apiMsg = data.message;
+            if (data.order) {
+              const idx = state.orders.findIndex(o => o.id === orderId);
+              if (idx > -1) state.orders[idx] = data.order;
+            }
+          } else {
+            return { success: false, message: data.message || 'Failed to cancel order.' };
+          }
+        } catch (e) {
+          console.warn('Backend cancel API call error, applying local cancellation:', e.message);
+        }
+      }
+
+      const curOrder = state.orders.find(o => o.id === orderId);
+      if (curOrder && curOrder.status !== 'Cancelled') {
+        curOrder.status = 'Cancelled';
+        if (!curOrder.statusHistory) curOrder.statusHistory = [];
+        curOrder.statusHistory.push({
+          status: 'Cancelled',
+          timestamp: new Date().toISOString(),
+          note: reason
+        });
+
+        // Restore local stock for items
+        if (Array.isArray(curOrder.items)) {
+          for (const item of curOrder.items) {
+            const p = state.products.find(prod => prod.id === item.productId);
+            if (p) {
+              p.stock += (item.quantity || 1);
+            }
+          }
+        }
+
+        // Reversal of earned tokens / refund of redeemed tokens locally
+        if (state.currentUser && state.currentUser.reward_tokens !== undefined) {
+          if (curOrder.tokensEarned > 0) {
+            state.currentUser.reward_tokens = Math.max(0, state.currentUser.reward_tokens - curOrder.tokensEarned);
+          }
+          if (curOrder.tokensRedeemed > 0) {
+            state.currentUser.reward_tokens += curOrder.tokensRedeemed;
+          }
+          saveUser();
+          emit('user:changed', state.currentUser);
+        }
+      }
+
+      saveOrders();
+      saveProducts();
+      emit('orders:changed', state.orders);
+      emit('products:changed', state.products);
+
+      return {
+        success: true,
+        message: apiMsg || `Order #${orderId} has been cancelled. Any reserved stock has been safely restored.`,
+        order: curOrder
+      };
+    },
+
+    getRewardTokens() {
+      return state.currentUser ? (state.currentUser.reward_tokens || 0) : 0;
+    },
+
+    async fetchRewards() {
+      if (typeof fetch === 'undefined' || !state.authToken) {
+        return {
+          balance: this.getRewardTokens(),
+          transactions: []
+        };
+      }
+      try {
+        const res = await fetch(this.getApiUrl('/api/auth/rewards'), {
+          headers: { 'Authorization': `Bearer ${state.authToken}` }
+        });
+        if (res.ok) {
+          const json = await res.json();
+          if (json.success && json.data) {
+            if (state.currentUser) {
+              state.currentUser.reward_tokens = json.data.balance;
+              saveUser();
+              emit('user:changed', state.currentUser);
+            }
+            return json.data;
+          }
+        }
+      } catch (e) {
+        console.warn('Failed to fetch rewards:', e.message);
+      }
+      return {
+        balance: this.getRewardTokens(),
+        transactions: []
+      };
     },
 
     updateOrderStatus(orderId, newStatus, note = '') {

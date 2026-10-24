@@ -326,13 +326,22 @@ router.put('/:id', optionalAuth, async (req, res, next) => {
       return res.status(404).json({ success: false, message: `Product with ID "${prodId}" not found.` });
     }
 
-    // Role check: Seller can only edit their own shop's products
-    if (req.user && req.user.role === 'seller' && req.user.shop_id && existing.shop_id !== req.user.shop_id) {
-      return res.status(403).json({
-        success: false,
-        error: 'Forbidden',
-        message: 'You are not authorized to modify products belonging to another seller.'
-      });
+    // Role check: Customer cannot modify products; Seller can only edit their own shop's products
+    if (req.user) {
+      if (req.user.role === 'customer') {
+        return res.status(403).json({
+          success: false,
+          error: 'Forbidden',
+          message: 'Customers are not authorized to modify seller product listings.'
+        });
+      }
+      if (req.user.role === 'seller' && req.user.shop_id && existing.shop_id !== req.user.shop_id) {
+        return res.status(403).json({
+          success: false,
+          error: 'Forbidden',
+          message: 'You are not authorized to modify products belonging to another seller.'
+        });
+      }
     }
 
     const { name, category, shopId, shop_id, price, originalPrice, original_price, discountPercent, stock, description, attributes, tags, image, isFeatured, isActive, rating } = req.body;
@@ -459,13 +468,22 @@ router.delete('/:id', optionalAuth, async (req, res, next) => {
       return res.status(404).json({ success: false, message: `Product with ID "${prodId}" not found.` });
     }
 
-    // Role check: Seller can only delete their own shop's products
-    if (req.user && req.user.role === 'seller' && req.user.shop_id && existing.shop_id !== req.user.shop_id) {
-      return res.status(403).json({
-        success: false,
-        error: 'Forbidden',
-        message: 'You are not authorized to delete products belonging to another seller.'
-      });
+    // Role check: Customer cannot delete products; Seller can only delete their own shop's products
+    if (req.user) {
+      if (req.user.role === 'customer') {
+        return res.status(403).json({
+          success: false,
+          error: 'Forbidden',
+          message: 'Customers are not authorized to delete seller product listings.'
+        });
+      }
+      if (req.user.role === 'seller' && req.user.shop_id && existing.shop_id !== req.user.shop_id) {
+        return res.status(403).json({
+          success: false,
+          error: 'Forbidden',
+          message: 'You are not authorized to delete products belonging to another seller.'
+        });
+      }
     }
 
     await db.query('DELETE FROM products WHERE id = ?', [prodId]);

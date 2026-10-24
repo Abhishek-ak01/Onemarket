@@ -38,9 +38,6 @@ const OrdersView = {
                 <button type="button" class="btn btn-primary btn-lg" id="btn-orders-login">
                   ${Utils.icons.user || ''} Sign In to Account
                 </button>
-                <button type="button" class="btn btn-outline btn-lg" id="btn-orders-quick-demo">
-                  ⚡ 1-Click Demo Customer
-                </button>
               </div>
             </div>
           </div>
@@ -49,7 +46,7 @@ const OrdersView = {
     }
 
     const orders = Store.getOrders();
-    const isJustOrdered = window.location.hash.includes('just_ordered=1');
+    const isJustOrdered = window.location.hash.includes('just_ordered=');
 
     if (orders.length === 0) {
       return `
@@ -84,7 +81,7 @@ const OrdersView = {
                 "${this.getRandomQuote()}"
               </p>
               <div style="display: inline-block; background: rgba(255,255,255,0.2); padding: 4px 14px; border-radius: 999px; font-size: var(--font-size-xs); font-weight: 600; letter-spacing: 0.05em;">
-                DEMO TRANSACTION PROCESSED SAFELY IN DATABASE
+                ORDER CONFIRMED & DISPATCHED TO LOCAL MERCHANT
               </div>
             </div>
           ` : ''}
@@ -130,7 +127,7 @@ const OrdersView = {
     const badgeClass = statusClasses[order.status] || 'badge-neutral';
 
     // Summary of shops involved
-    const shopNames = Array.from(new Set(order.items.map(i => i.shopName || 'Local Merchant'))).join(', ');
+    const shopNames = Array.from(new Set((order.items || []).map(i => i.shopName || 'Local Merchant'))).join(', ');
 
     // 5-stage tracking progress computation
     const stages = [
@@ -157,7 +154,7 @@ const OrdersView = {
       currentStepIndex = 1; // Confirmed / Pending
     }
 
-    const canCancel = (order.status === 'Pending' || order.status === 'Confirmed');
+    const canCancel = (order.status === 'Pending' || order.status === 'Confirmed' || order.status === 'Accepted');
 
     return `
       <article class="order-card" id="order-${order.id}" style="background: white; border: 1px solid var(--color-border); border-radius: var(--radius-lg); box-shadow: var(--shadow-sm); overflow: hidden; transition: transform 0.2s ease, box-shadow 0.2s ease;">
@@ -171,10 +168,9 @@ const OrdersView = {
             <div>
               <div style="font-weight: 700; color: var(--neutral-900); font-size: 1.1rem; display: flex; align-items: center; gap: var(--space-2);">
                 <span>Order #${Utils.escapeHTML(order.id)}</span>
-                <span class="badge" style="font-size: 10px; background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd;">DEMO</span>
               </div>
               <div style="font-size: var(--font-size-xs); color: var(--neutral-500);">
-                Placed on ${Utils.formatDate(order.date)} • Payment: <strong>${Utils.escapeHTML(order.paymentStatus || 'Demo Completed')}</strong> (${Utils.escapeHTML(order.paymentMethod || 'Demo Pay')})
+                Placed on ${Utils.formatDate(order.date)} • Payment: <strong>${Utils.escapeHTML(order.paymentStatus || 'Completed')}</strong> (${Utils.escapeHTML(order.paymentMethod || 'Pay')})
               </div>
             </div>
           </div>
@@ -302,21 +298,11 @@ const OrdersView = {
   },
 
   initListeners() {
-    // Unauthenticated prompt triggers
+    // Unauthenticated prompt trigger
     const loginBtn = document.getElementById('btn-orders-login');
     if (loginBtn && typeof AuthModal !== 'undefined') {
       loginBtn.addEventListener('click', () => {
-        AuthModal.open('customer', 'login', () => {
-          window.location.reload();
-        });
-      });
-    }
-
-    const quickDemoBtn = document.getElementById('btn-orders-quick-demo');
-    if (quickDemoBtn && typeof AuthModal !== 'undefined') {
-      quickDemoBtn.addEventListener('click', async () => {
-        await AuthModal.quickLogin('customer');
-        window.location.reload();
+        AuthModal.open({ tab: 'customer-login' });
       });
     }
 
@@ -331,7 +317,7 @@ const OrdersView = {
       });
     });
 
-    // Print Demo Invoice Modal
+    // Print Invoice Modal
     document.querySelectorAll('[data-action="print-receipt"]').forEach(btn => {
       btn.addEventListener('click', () => {
         const orderId = btn.dataset.orderId;
@@ -342,26 +328,29 @@ const OrdersView = {
       });
     });
 
-    // Cancel Order Handler
+    // Cancel Order Handler with proper verification, API call, inventory restoration and toast
     document.querySelectorAll('[data-action="cancel-order"]').forEach(btn => {
       btn.addEventListener('click', async () => {
         const orderId = btn.dataset.orderId;
-        if (!confirm(`Are you sure you want to cancel Order #${orderId}? Stock will be safely restored.`)) {
-          return;
-        }
-
-        const res = Store.updateOrderStatus(orderId, 'Cancelled', 'Cancelled by customer.');
-        if (res.success) {
-          Utils.showNotification(`Order #${orderId} has been cancelled.`, 'info');
-          // Re-render
-          const appRoot = document.getElementById('app-root');
-          if (appRoot) {
-            appRoot.innerHTML = OrdersView.render();
-            OrdersView.initListeners();
+        Utils.confirmDialog({
+          title: `Cancel Order #${orderId}?`,
+          message: 'Are you sure you want to cancel this order? Any deducted inventory and redeemed loyalty tokens will be safely restored.',
+          confirmText: 'Yes, Cancel Order',
+          confirmStyle: 'danger',
+          onConfirm: async () => {
+            btn.disabled = true;
+            btn.innerText = 'Cancelling...';
+            const res = await Store.cancelOrder(orderId, 'Cancelled by customer.');
+            if (res.success) {
+              Utils.showToast(res.message || `Order #${orderId} has been cancelled successfully.`, 'info');
+              App.renderCurrentRoute();
+            } else {
+              btn.disabled = false;
+              btn.innerText = 'Cancel Order';
+              Utils.showToast(res.message || 'Failed to cancel order.', 'error');
+            }
           }
-        } else {
-          Utils.showNotification(res.message || 'Failed to cancel order.', 'error');
-        }
+        });
       });
     });
   },
@@ -487,16 +476,17 @@ const OrdersView = {
     const total = order.total || (subtotal + deliveryFee + taxes);
 
     Utils.openModal({
-      title: `Tax Invoice / Demo Receipt #${order.id}`,
+      title: `Official Purchase Receipt #${order.id}`,
       size: 'lg',
       bodyHtml: `
         <div class="printable-invoice" id="printable-invoice-content" style="background: white; padding: var(--space-4); color: #0f172a; position: relative;">
 
-          <!-- Watermark -->
-          <div style="border: 2px dashed #94a3b8; background: #f8fafc; border-radius: var(--radius-md); padding: 8px 12px; text-align: center; margin-bottom: var(--space-5);">
-            <strong style="color: #64748b; font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase;">
-              ★ DEMO TRANSACTION — HACKATHON PROTOTYPE ONLY — NOT A TAX INVOICE FOR LEGAL COMMERCE ★
+          <!-- Official Header Badge -->
+          <div style="border: 1px solid #cbd5e1; background: #f8fafc; border-radius: var(--radius-md); padding: 8px 14px; display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-5);">
+            <strong style="color: #0f172a; font-size: 11px; letter-spacing: 0.05em; text-transform: uppercase;">
+              ✓ Verified OneMarket Purchase Receipt • Hubballi, Karnataka
             </strong>
+            <span style="font-size: 11px; color: #64748b; font-weight: 600;">Status: ${Utils.escapeHTML(order.status)}</span>
           </div>
 
           <!-- Invoice Header -->
@@ -507,7 +497,7 @@ const OrdersView = {
               <div style="font-size: 12px; color: #64748b;">Koppikar Road, Hubballi, Karnataka 580020</div>
             </div>
             <div style="text-align: right;">
-              <h3 style="font-family: var(--font-family-display); font-size: 1.25rem; color: #0f172a; margin: 0 0 4px;">ORDER RECEIPT</h3>
+              <h3 style="font-family: var(--font-family-display); font-size: 1.25rem; color: #0f172a; margin: 0 0 4px;">PURCHASE RECEIPT</h3>
               <div style="font-size: 12px; font-weight: 700;">#${Utils.escapeHTML(order.id)}</div>
               <div style="font-size: 12px; color: #64748b;">Date: ${Utils.formatDate(order.date)}</div>
             </div>
@@ -523,17 +513,18 @@ const OrdersView = {
             </div>
             <div style="background: #f8fafc; padding: var(--space-3); border-radius: var(--radius-sm); border: 1px solid #e2e8f0;">
               <div style="font-weight: 700; color: #475569; text-transform: uppercase; margin-bottom: 4px;">Payment & Fulfillment:</div>
-              <div>Method: <strong>${Utils.escapeHTML(order.paymentMethod || 'Demo Pay')}</strong></div>
+              <div>Method: <strong>${Utils.escapeHTML(order.paymentMethod || 'Pay')}</strong></div>
               <div>Payment Status: <strong style="color: #059669;">${Utils.escapeHTML(order.paymentStatus || 'Completed')}</strong></div>
               <div>Fulfillment: <strong>${order.customer?.deliveryPreference === 'pickup' ? 'Merchant Counter Pickup' : 'Hyperlocal Home Delivery'}</strong></div>
             </div>
           </div>
 
-          <!-- Itemized Table -->
+          <!-- Itemized Table with Product Image Snapshot -->
           <table style="width: 100%; border-collapse: collapse; margin-bottom: var(--space-4); font-size: 12px;">
             <thead>
               <tr style="background: #0f172a; color: white; text-align: left;">
-                <th style="padding: 8px 10px;">Item Description</th>
+                <th style="padding: 8px 10px; width: 48px;">Item</th>
+                <th style="padding: 8px 10px;">Description</th>
                 <th style="padding: 8px 10px; text-align: center;">Qty</th>
                 <th style="padding: 8px 10px; text-align: right;">Unit Price</th>
                 <th style="padding: 8px 10px; text-align: right;">Discount</th>
@@ -543,6 +534,14 @@ const OrdersView = {
             <tbody>
               ${order.items.map((item, idx) => `
                 <tr style="border-bottom: 1px solid #e2e8f0; background: ${idx % 2 === 0 ? '#ffffff' : '#f8fafc'};">
+                  <td style="padding: 8px 10px;">
+                    <img 
+                      src="${item.image || 'assets/product-images/placeholder.svg'}" 
+                      alt="${Utils.escapeHTML(item.name)}" 
+                      style="width: 36px; height: 36px; object-fit: cover; border-radius: 4px; border: 1px solid #e2e8f0;"
+                      onerror="this.src='assets/product-images/placeholder.svg';"
+                    />
+                  </td>
                   <td style="padding: 8px 10px;">
                     <div style="font-weight: 600; color: #0f172a;">${Utils.escapeHTML(item.name)}</div>
                     <div style="font-size: 11px; color: #64748b;">Merchant: ${Utils.escapeHTML(item.shopName || 'Local Shop')}</div>
@@ -558,13 +557,19 @@ const OrdersView = {
 
           <!-- Financial Summary -->
           <div style="display: flex; justify-content: flex-end; margin-bottom: var(--space-4);">
-            <div style="width: 260px; font-size: 13px;">
+            <div style="width: 320px; font-size: 13px;">
               <div style="display: flex; justify-content: space-between; padding: 3px 0; color: #475569;">
-                <span>Subtotal:</span>
+                <span>Merchandise Subtotal:</span>
                 <span style="font-weight: 600; color: #0f172a;">${Utils.formatINR(subtotal)}</span>
               </div>
+              ${order.tokenDiscount > 0 ? `
+                <div style="display: flex; justify-content: space-between; padding: 3px 0; color: #059669;">
+                  <span>Loyalty Token Discount (${order.tokensRedeemed} tokens):</span>
+                  <span style="font-weight: 700;">-${Utils.formatINR(order.tokenDiscount)}</span>
+                </div>
+              ` : ''}
               <div style="display: flex; justify-content: space-between; padding: 3px 0; color: #475569;">
-                <span>Delivery Charges:</span>
+                <span>Hyperlocal Delivery:</span>
                 <span style="font-weight: 600; color: #0f172a;">${deliveryFee === 0 ? '<span style="color: #059669;">FREE</span>' : Utils.formatINR(deliveryFee)}</span>
               </div>
               <div style="display: flex; justify-content: space-between; padding: 3px 0; color: #475569;">
@@ -575,6 +580,12 @@ const OrdersView = {
                 <span>Total Amount Paid:</span>
                 <span style="font-family: var(--font-family-display); font-size: 1.15rem; color: #0f172a;">${Utils.formatINR(total)}</span>
               </div>
+              ${(order.tokensEarned || 0) > 0 ? `
+                <div style="display: flex; justify-content: space-between; padding: 6px 8px; margin-top: 6px; background: #ecfdf5; border-radius: 4px; color: #065f46; font-size: 12px; font-weight: 600;">
+                  <span>🎁 Loyalty Tokens Earned:</span>
+                  <span>+${order.tokensEarned} OneMarket tokens</span>
+                </div>
+              ` : ''}
             </div>
           </div>
 
