@@ -1,0 +1,981 @@
+/**
+ * LocalLoop - Marketplace Upgrade Stylesheet
+ * Auth modal, multi-step checkout wizard, printable receipt, tracking timeline,
+ * verified reviews, seller storefront, and promotional discount badges.
+ */
+
+/* ==========================================================================
+   1. Promotional Badges & Discount Pricing
+   ========================================================================== */
+.price-discount-wrap {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2, 8px);
+  flex-wrap: wrap;
+}
+
+.price-current {
+  font-size: var(--font-size-lg, 1.25rem);
+  font-weight: 800;
+  color: var(--primary-700, #1b4332);
+}
+
+.price-original {
+  font-size: var(--font-size-sm, 0.875rem);
+  color: var(--neutral-400, #9ca3af);
+  text-decoration: line-through;
+  font-weight: 500;
+}
+
+.discount-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  background: #fee2e2;
+  color: #b91c1c;
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: var(--radius-full, 9999px);
+  letter-spacing: 0.02em;
+}
+
+.discount-badge-lg {
+  font-size: 0.875rem;
+  padding: 4px 12px;
+}
+
+/* ==========================================================================
+   2. Authentication Modal & Guest Lock
+   ========================================================================== */
+.auth-modal-dialog {
+  max-width: 460px;
+  width: 94%;
+  max-height: 90vh;
+  background: #ffffff;
+  border-radius: 20px;
+  box-shadow: 0 25px 60px -12px rgba(0, 0, 0, 0.35);
+  overflow: hidden;
+  border: 1px solid #e2e8f0;
+  animation: modalSlideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  display: flex;
+  flex-direction: column;
+}
+
+@keyframes modalSlideUp {
+  from { opacity: 0; transform: translateY(20px) scale(0.97); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.auth-header {
+  padding: 22px 24px 14px;
+  text-align: center;
+  position: relative;
+  background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%);
+  border-bottom: 1px solid #d1fae5;
+  flex-shrink: 0;
+}
+
+.auth-header h3 {
+  font-size: 1.4rem;
+  font-weight: 800;
+  color: #064e3b;
+  margin: 6px 0 2px;
+  font-family: var(--font-family-display, inherit);
+}
+
+.auth-header p {
+  font-size: 0.82rem;
+  color: #4b5563;
+  margin: 0;
+  line-height: 1.4;
+}
+
+.auth-body {
+  padding: 16px 24px 24px;
+  overflow-y: auto;
+  max-height: calc(90vh - 210px);
+}
+
+/* Custom smooth scrollbar */
+.auth-body::-webkit-scrollbar {
+  width: 6px;
+}
+.auth-body::-webkit-scrollbar-track {
+  background: #f8fafc;
+}
+.auth-body::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+}
+
+/* Segmented Control Tabs */
+.auth-tabs {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  background: #f1f5f9;
+  padding: 4px;
+  border-radius: 12px;
+  margin: 12px 24px 4px;
+  gap: 2px;
+  flex-shrink: 0;
+}
+
+.auth-tab-btn {
+  padding: 8px 4px;
+  border: none;
+  background: transparent;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #64748b;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  text-align: center;
+}
+
+.auth-tab-btn:hover {
+  color: #0f172a;
+}
+
+.auth-tab-btn.active {
+  background: #ffffff;
+  color: #047857;
+  font-weight: 700;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.08);
+}
+
+/* Evaluator Fast Login Bar */
+.auth-demo-shortcuts {
+  background: #f8fafc;
+  border: 1px dashed #cbd5e1;
+  border-radius: 12px;
+  padding: 10px 14px;
+  margin: 10px 24px 4px;
+  flex-shrink: 0;
+}
+
+.auth-demo-shortcuts h5 {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: #475569;
+  margin: 0 0 8px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.auth-demo-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.auth-demo-btn {
+  padding: 8px 10px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  border: 1.5px solid #cbd5e1;
+  background: #ffffff;
+  color: #1e293b;
+  border-radius: 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: all 0.2s ease;
+}
+
+.auth-demo-btn:hover {
+  background: #ecfdf5;
+  border-color: #059669;
+  color: #047857;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 6px rgba(5, 150, 105, 0.15);
+}
+
+/* Form inputs & controls inside Auth Modal */
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.auth-form .form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  margin-bottom: 0;
+}
+
+.auth-form .form-label {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #374151;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.auth-form .form-label .required {
+  color: #dc2626;
+}
+
+.auth-form .form-input,
+.auth-form .form-control,
+.auth-form input[type="text"],
+.auth-form input[type="email"],
+.auth-form input[type="tel"],
+.auth-form input[type="password"],
+.auth-form select {
+  width: 100% !important;
+  box-sizing: border-box !important;
+  height: 44px !important;
+  padding: 10px 14px !important;
+  font-size: 0.95rem !important;
+  color: #0f172a !important;
+  background-color: #ffffff !important;
+  border: 1.5px solid #d1d5db !important;
+  border-radius: 10px !important;
+  outline: none !important;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease !important;
+}
+
+.auth-form .form-input:focus,
+.auth-form .form-control:focus,
+.auth-form input[type="text"]:focus,
+.auth-form input[type="email"]:focus,
+.auth-form input[type="tel"]:focus,
+.auth-form input[type="password"]:focus,
+.auth-form select:focus {
+  border-color: #059669 !important;
+  box-shadow: 0 0 0 3.5px rgba(5, 150, 105, 0.18) !important;
+}
+
+.auth-form select {
+  cursor: pointer;
+  appearance: auto;
+}
+
+/* Submit Buttons inside Auth Modal */
+.auth-form button[type="submit"] {
+  width: 100%;
+  height: 46px;
+  margin-top: 6px;
+  border: none;
+  border-radius: 10px;
+  font-size: 0.96rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: #ffffff;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.auth-form button.btn-customer-submit {
+  background: linear-gradient(135deg, #1b4332 0%, #0d2818 100%);
+}
+
+.auth-form button.btn-customer-submit:hover {
+  background: linear-gradient(135deg, #2d6a4f 0%, #1b4332 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(27, 67, 50, 0.28);
+}
+
+.auth-form button.btn-seller-submit {
+  background: linear-gradient(135deg, #0f766e 0%, #115e59 100%);
+}
+
+.auth-form button.btn-seller-submit:hover {
+  background: linear-gradient(135deg, #14b8a6 0%, #0f766e 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(15, 118, 110, 0.28);
+}
+
+/* Switcher footer inside auth modal */
+.auth-footer-switcher {
+  margin-top: 14px;
+  text-align: center;
+  font-size: 0.82rem;
+  color: #64748b;
+}
+
+.auth-footer-switcher a {
+  color: #059669;
+  font-weight: 700;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.auth-footer-switcher a:hover {
+  color: #047857;
+}
+
+/* ==========================================================================
+   3. Multi-Step Checkout Wizard
+   ========================================================================== */
+.checkout-stepper {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-6, 24px);
+  padding: var(--space-4, 16px) var(--space-6, 24px);
+  background: var(--neutral-0, #ffffff);
+  border-radius: var(--radius-xl, 14px);
+  border: 1px solid var(--neutral-200, #e5e7eb);
+  overflow-x: auto;
+}
+
+.step-node {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  opacity: 0.5;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.step-node.active {
+  opacity: 1;
+}
+
+.step-node.completed {
+  opacity: 0.9;
+}
+
+.step-num {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.85rem;
+  font-weight: 800;
+  background: var(--neutral-200, #e5e7eb);
+  color: var(--neutral-700, #374151);
+}
+
+.step-node.active .step-num {
+  background: var(--primary-600, #2d6a4f);
+  color: #ffffff;
+  box-shadow: 0 0 0 4px var(--primary-100, #d1fae5);
+}
+
+.step-node.completed .step-num {
+  background: #10b981;
+  color: #ffffff;
+}
+
+.step-title {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--neutral-800, #1f2937);
+}
+
+.step-divider {
+  flex: 1;
+  height: 2px;
+  background: var(--neutral-200, #e5e7eb);
+  margin: 0 var(--space-3, 12px);
+  min-width: 24px;
+}
+
+.step-divider.filled {
+  background: #10b981;
+}
+
+/* Payment choices */
+.payment-option-card {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3, 12px);
+  padding: var(--space-4, 16px);
+  border: 2px solid var(--neutral-200, #e5e7eb);
+  border-radius: var(--radius-lg, 12px);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-bottom: var(--space-3, 12px);
+  background: var(--neutral-0, #ffffff);
+}
+
+.payment-option-card:hover {
+  border-color: var(--primary-300, #86efac);
+  background: var(--primary-50, #f0fdf4);
+}
+
+.payment-option-card.selected {
+  border-color: var(--primary-600, #2d6a4f);
+  background: #f0fdf4;
+}
+
+.demo-payment-pill {
+  display: inline-block;
+  background: #fef3c7;
+  color: #92400e;
+  font-size: 0.7rem;
+  font-weight: 800;
+  padding: 2px 6px;
+  border-radius: 4px;
+  margin-left: 6px;
+  letter-spacing: 0.03em;
+}
+
+/* ==========================================================================
+   4. Order Tracking Progress Timeline
+   ========================================================================== */
+.order-tracking-card {
+  background: var(--neutral-0, #ffffff);
+  border-radius: var(--radius-xl, 16px);
+  border: 1px solid var(--neutral-200, #e5e7eb);
+  padding: var(--space-6, 24px);
+  margin-top: var(--space-4, 16px);
+}
+
+.tracking-timeline {
+  display: flex;
+  justify-content: space-between;
+  position: relative;
+  margin: var(--space-6, 24px) 0 var(--space-4, 16px);
+}
+
+.tracking-timeline::before {
+  content: '';
+  position: absolute;
+  top: 18px;
+  left: 30px;
+  right: 30px;
+  height: 4px;
+  background: var(--neutral-200, #e5e7eb);
+  z-index: 1;
+}
+
+.tracking-timeline-fill {
+  position: absolute;
+  top: 18px;
+  left: 30px;
+  height: 4px;
+  background: #10b981;
+  z-index: 2;
+  transition: width 0.5s ease;
+}
+
+.timeline-step {
+  position: relative;
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100px;
+  text-align: center;
+}
+
+.timeline-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--neutral-100, #f3f4f6);
+  border: 3px solid var(--neutral-300, #d1d5db);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.9rem;
+  color: var(--neutral-500, #6b7280);
+  transition: all 0.3s ease;
+}
+
+.timeline-step.completed .timeline-icon {
+  background: #10b981;
+  border-color: #059669;
+  color: #ffffff;
+}
+
+.timeline-step.active .timeline-icon {
+  background: var(--primary-600, #2d6a4f);
+  border-color: var(--primary-300, #86efac);
+  color: #ffffff;
+  animation: pulseActive 2s infinite;
+}
+
+@keyframes pulseActive {
+  0% { box-shadow: 0 0 0 0 rgba(45, 106, 79, 0.4); }
+  70% { box-shadow: 0 0 0 10px rgba(45, 106, 79, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(45, 106, 79, 0); }
+}
+
+.timeline-label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  margin-top: 8px;
+  color: var(--neutral-700, #374151);
+}
+
+.timeline-step.active .timeline-label {
+  color: var(--primary-700, #1b4332);
+  font-weight: 800;
+}
+
+/* ==========================================================================
+   5. Printable Invoice & Receipt Modal
+   ========================================================================== */
+.receipt-modal-dialog {
+  max-width: 680px;
+  width: 95%;
+  background: #ffffff;
+  border-radius: var(--radius-2xl, 20px);
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.3);
+  overflow: hidden;
+  position: relative;
+}
+
+.receipt-content {
+  padding: 32px;
+  font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+  color: #1e293b;
+  position: relative;
+}
+
+.receipt-watermark {
+  position: absolute;
+  top: 45%;
+  left: 50%;
+  transform: translate(-50%, -50%) rotate(-30deg);
+  font-size: 3.5rem;
+  font-weight: 900;
+  color: rgba(203, 213, 225, 0.28);
+  pointer-events: none;
+  white-space: nowrap;
+  letter-spacing: 0.1em;
+  z-index: 0;
+  user-select: none;
+}
+
+.receipt-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding-bottom: 20px;
+  border-bottom: 2px solid #e2e8f0;
+  position: relative;
+  z-index: 1;
+}
+
+.receipt-logo-title {
+  font-size: 1.6rem;
+  font-weight: 900;
+  color: #1b4332;
+  letter-spacing: -0.02em;
+}
+
+.receipt-items-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 20px 0;
+  position: relative;
+  z-index: 1;
+}
+
+.receipt-items-table th {
+  background: #f8fafc;
+  color: #475569;
+  font-size: 0.75rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 10px 12px;
+  border-bottom: 2px solid #e2e8f0;
+  text-align: left;
+}
+
+.receipt-items-table td {
+  padding: 12px;
+  border-bottom: 1px solid #f1f5f9;
+  font-size: 0.875rem;
+}
+
+.receipt-img-thumb {
+  width: 44px;
+  height: 44px;
+  object-fit: cover;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+}
+
+.receipt-totals {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 16px;
+  position: relative;
+  z-index: 1;
+}
+
+.receipt-totals-table {
+  width: 260px;
+  font-size: 0.875rem;
+}
+
+.receipt-totals-table td {
+  padding: 6px 0;
+}
+
+.receipt-totals-table tr.grand-total td {
+  font-size: 1.15rem;
+  font-weight: 900;
+  color: #1b4332;
+  border-top: 2px solid #0f172a;
+  padding-top: 10px;
+}
+
+/* Print Stylesheet */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  #receipt-printable, #receipt-printable * {
+    visibility: visible;
+  }
+  #receipt-printable {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    margin: 0;
+    padding: 20px;
+  }
+  .no-print {
+    display: none !important;
+  }
+}
+
+/* ==========================================================================
+   6. Celebratory Order Confirmation Visual & Friendly Quotes
+   ========================================================================== */
+.celebration-hero {
+  background: linear-gradient(135deg, #ecfdf5 0%, #f0fdf4 50%, #ffffff 100%);
+  border: 1px solid #a7f3d0;
+  border-radius: var(--radius-2xl, 20px);
+  padding: 36px 24px;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+  margin-bottom: var(--space-6, 24px);
+}
+
+.celebration-badge-icon {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: #10b981;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+  margin: 0 auto 16px;
+  box-shadow: 0 10px 25px -5px rgba(16, 185, 129, 0.4);
+}
+
+.celebration-quote-card {
+  max-width: 540px;
+  margin: 20px auto 0;
+  padding: 14px 20px;
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(8px);
+  border-radius: var(--radius-xl, 14px);
+  border: 1px solid #bbf7d0;
+  font-style: italic;
+  font-size: 0.95rem;
+  color: #065f46;
+  font-weight: 600;
+}
+
+/* ==========================================================================
+   7. Customer Verified Reviews
+   ========================================================================== */
+.review-item {
+  padding: 16px 0;
+  border-bottom: 1px solid var(--neutral-200, #e5e7eb);
+}
+
+.review-item:last-child {
+  border-bottom: none;
+}
+
+.review-badge-verified {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: #dcfce7;
+  color: #166534;
+  font-size: 0.725rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 9999px;
+  margin-left: 8px;
+}
+
+.stars-rating {
+  color: #f59e0b;
+  display: inline-flex;
+  gap: 2px;
+  font-size: 0.9rem;
+}
+
+/* ==========================================================================
+   8. Seller Public Storefront
+   ========================================================================== */
+.storefront-banner {
+  background: linear-gradient(135deg, #1b4332 0%, #2d6a4f 100%);
+  color: #ffffff;
+  border-radius: var(--radius-2xl, 20px);
+  padding: 36px 32px;
+  margin-bottom: var(--space-6, 24px);
+  box-shadow: 0 10px 25px -5px rgba(27, 67, 50, 0.3);
+}
+
+.storefront-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.storefront-pill {
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(4px);
+  padding: 4px 12px;
+  border-radius: 9999px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* ==========================================================================
+   9. Universal Form Controls & Inputs (Checkout, Reviews & Filters)
+   ========================================================================== */
+.form-group {
+  margin-bottom: 16px;
+}
+
+.form-label {
+  display: block;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #1f2937;
+  margin-bottom: 6px;
+  line-height: 1.3;
+}
+
+.form-control {
+  width: 100%;
+  box-sizing: border-box;
+  min-height: 44px;
+  padding: 10px 14px;
+  font-size: 0.925rem;
+  font-family: inherit;
+  color: #0f172a;
+  background-color: #ffffff;
+  border: 1.5px solid #cbd5e1;
+  border-radius: 10px;
+  outline: none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+}
+
+.form-control:focus {
+  border-color: #059669;
+  box-shadow: 0 0 0 3.5px rgba(5, 150, 105, 0.18);
+  background-color: #ffffff;
+}
+
+textarea.form-control {
+  min-height: 84px;
+  resize: vertical;
+  line-height: 1.5;
+}
+
+/* ==========================================================================
+   10. Product Filter Sidebar Polish
+   ========================================================================== */
+.filters-sidebar {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+}
+
+.filter-radio-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+  user-select: none;
+  margin-bottom: 2px;
+}
+
+.filter-radio-row:hover {
+  background-color: #f8fafc;
+}
+
+.filter-radio-row input[type="radio"] {
+  accent-color: #059669;
+  width: 16px;
+  height: 16px;
+  margin-right: 10px;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.filter-radio-row .cat-label-name {
+  font-size: 0.865rem;
+  color: #334155;
+  font-weight: 500;
+  flex: 1;
+}
+
+.filter-radio-row .cat-count-badge {
+  background: #f1f5f9;
+  color: #64748b;
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 9999px;
+  border: 1px solid #e2e8f0;
+  min-width: 22px;
+  text-align: center;
+}
+
+.filter-radio-row:has(input:checked) {
+  background-color: #ecfdf5;
+}
+
+.filter-radio-row:has(input:checked) .cat-label-name {
+  color: #065f46;
+  font-weight: 700;
+}
+
+.filter-radio-row:has(input:checked) .cat-count-badge {
+  background: #d1fae5;
+  color: #047857;
+  border-color: #a7f3d0;
+}
+
+.filters-sidebar select.form-select {
+  width: 100%;
+  height: 42px;
+  padding: 8px 12px;
+  border: 1.5px solid #cbd5e1;
+  border-radius: 10px;
+  background-color: #ffffff;
+  font-size: 0.875rem;
+  color: #1e293b;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  box-sizing: border-box;
+}
+
+.filters-sidebar select.form-select:focus {
+  border-color: #059669;
+  box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.15);
+}
+
+.filters-sidebar .price-range-inputs {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.filters-sidebar .price-range-input {
+  width: 100%;
+  height: 40px;
+  padding: 6px 12px;
+  border: 1.5px solid #cbd5e1;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  color: #1e293b;
+  background: #ffffff;
+  box-sizing: border-box;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.filters-sidebar .price-range-input:focus {
+  border-color: #059669;
+  box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.15);
+}
+
+/* ==========================================================================
+   11. Verified Customer Reviews Layout Polish
+   ========================================================================== */
+.product-reviews-section {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.review-form-card {
+  background: #f8fafc;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 14px;
+  padding: 22px;
+  margin-bottom: 24px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+}
+
+.review-form-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+
+.review-form-header h4 {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0;
+}
+
+.verified-policy-banner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #ecfdf5;
+  border: 1px solid #a7f3d0;
+  border-radius: 8px;
+  padding: 9px 12px;
+  font-size: 0.8rem;
+  color: #065f46;
+  margin-bottom: 16px;
+  line-height: 1.4;
+}
+
+.review-form-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+@media (max-width: 640px) {
+  .checkout-grid-2col,
+  .checkout-grid-3col {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+

@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+  <title>OneMarket — Hyperlocal Neighbourhood Marketplace | Hubballi</title>
+  
+  <!-- SEO & Social Meta -->
+  <meta name="description" content="OneMarket connects customers with verified neighbourhood shops across Hubballi, Karnataka. Discover local items, compare prices across merchants, and submit order requests without phone calls." />
+  <meta name="keywords" content="OneMarket, hyperlocal marketplace, Hubballi local shopping, Hubli Karnataka, neighbourhood shops, compare prices, budget buddy" />
+  <meta name="theme-color" content="#1b4332" />
+  
+  <!-- Preconnect Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+
+  <!-- Design System & Stylesheets -->
+  <link rel="stylesheet" href="css/variables.css" />
+  <link rel="stylesheet" href="css/base.css" />
+  <link rel="stylesheet" href="css/components.css" />
+  <link rel="stylesheet" href="css/marketplace.css" />
+  <link rel="stylesheet" href="css/features.css" />
+  <link rel="stylesheet" href="css/seller.css" />
+  <link rel="stylesheet" href="css/upgrade.css" />
+</head>
+<body>
+
+  <!-- Top Navigation & Demo Switcher Container -->
+  <div id="app-navbar-container"></div>
+
+  <!-- Dynamic Page Content Container -->
+  <main id="app-main-content" class="main-content" role="main" tabindex="-1">
+    <!-- Rendered dynamically by Router.js -->
+  </main>
+
+  <!-- Global Footer Container -->
+  <div id="app-footer-container"></div>
+
+  <!-- Toast Notification Container -->
+  <div id="toast-container" class="toast-container" aria-live="polite" aria-atomic="true"></div>
+
+  <!-- Global Modal Dialog Backdrop -->
+  <div id="app-modal-backdrop" class="modal-backdrop" role="presentation"></div>
+
+  <!-- JavaScript Modules in Strict Dependency Order -->
+  <!-- 1. Data & Utils -->
+  <script src="js/mock-data.js"></script>
+  <script src="js/utils.js"></script>
+  <script src="js/store.js"></script>
+
+  <!-- 2. Reusable Component Renderers -->
+  <script src="js/components/navbar.js"></script>
+  <script src="js/components/auth-modal.js"></script>
+  <script src="js/components/product-card.js"></script>
+  <script src="js/components/footer.js"></script>
+
+  <!-- 3. Views -->
+  <script src="js/views/home-view.js"></script>
+  <script src="js/views/catalog-view.js"></script>
+  <script src="js/views/product-view.js"></script>
+  <script src="js/views/compare-view.js"></script>
+  <script src="js/views/budget-view.js"></script>
+  <script src="js/views/cart-view.js"></script>
+  <script src="js/views/orders-view.js"></script>
+  <script src="js/views/seller-view.js"></script>
+  <script src="js/views/storefront-view.js"></script>
+  <script src="js/views/about-view.js"></script>
+
+  <!-- 4. Router & Bootstrap -->
+  <script src="js/router.js"></script>
+  <script src="js/app.js"></script>
+
+</body>
+</html>

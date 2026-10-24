@@ -1,0 +1,129 @@
+/* ==========================================================================
+   LocalLoop - Design System Tokens & Variables
+   Aesthetic: Deep Forest Green + Soft Sage + Warm Amber + Clean Warm Neutrals
+   ========================================================================== */
+
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
+
+:root {
+  /* Brand Palette */
+  --primary-900: #0a1f16;
+  --primary-800: #0f281e;
+  --primary-700: #1b4332; /* Deep Forest Green (Main) */
+  --primary-600: #2d6a4f;
+  --primary-500: #40916c;
+  --primary-400: #52b788; /* Soft Sage Green */
+  --primary-300: #74c69d;
+  --primary-200: #95d5b2;
+  --primary-100: #b7e4c7;
+  --primary-50:  #eaf5ee; /* Light Forest Tint */
+  --primary-25:  #f4faf6;
+
+  /* Accent: Warm Amber */
+  --accent-700: #b45309;
+  --accent-600: #d97706; /* Warm Amber */
+  --accent-500: #f59e0b;
+  --accent-400: #fbbf24;
+  --accent-100: #fef3c7;
+  --accent-50:  #fffbeb;
+
+  /* Neutrals: Warm Off-White / Charcoal */
+  --neutral-950: #0f172a;
+  --neutral-900: #1e293b; /* Dark Charcoal (Main Text) */
+  --neutral-800: #334155;
+  --neutral-700: #475569;
+  --neutral-600: #64748b; /* Secondary Text */
+  --neutral-500: #94a3b8; /* Muted Text */
+  --neutral-400: #cbd5e1;
+  --neutral-300: #e2e8f0; /* Subtle Borders */
+  --neutral-200: #f1f5f9;
+  --neutral-100: #f8fafc;
+  --neutral-50:  #fbfbfa; /* Warm Off-White Page Background */
+  --white:       #ffffff;
+
+  /* Functional Status */
+  --success-text: #166534;
+  --success-bg:   #dcfce7;
+  --success-border:#86efac;
+
+  --warning-text: #9a3412;
+  --warning-bg:   #ffedd5;
+  --warning-border:#fdba74;
+
+  --danger-text:  #991b1b;
+  --danger-bg:    #fee2e2;
+  --danger-border:#fca5a5;
+
+  --info-text:    #075985;
+  --info-bg:      #e0f2fe;
+  --info-border:  #7dd3fc;
+
+  /* Semantic Token Mapping */
+  --color-primary:        var(--primary-700);
+  --color-primary-hover:  var(--primary-800);
+  --color-primary-light:  var(--primary-50);
+  --color-sage:           var(--primary-400);
+  --color-accent:         var(--accent-600);
+  --color-accent-light:   var(--accent-100);
+
+  --color-bg:             var(--neutral-50);
+  --color-surface:        var(--white);
+  --color-surface-hover:  #f8faf9;
+  --color-border:         var(--neutral-300);
+  --color-border-subtle:  #edf2f7;
+
+  --color-text:           var(--neutral-900);
+  --color-text-secondary: var(--neutral-700);
+  --color-text-muted:     var(--neutral-500);
+
+  /* Typography */
+  --font-family-display: 'Outfit', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-family-body:    'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+
+  --font-size-xs:   0.75rem;    /* 12px */
+  --font-size-sm:   0.875rem;   /* 14px */
+  --font-size-base: 1rem;       /* 16px */
+  --font-size-md:   1.125rem;   /* 18px */
+  --font-size-lg:   1.25rem;    /* 20px */
+  --font-size-xl:   1.5rem;     /* 24px */
+  --font-size-2xl:  1.875rem;   /* 30px */
+  --font-size-3xl:  2.25rem;    /* 36px */
+  --font-size-4xl:  3rem;       /* 48px */
+
+  /* Spacing */
+  --space-1: 0.25rem;  /* 4px */
+  --space-2: 0.5rem;   /* 8px */
+  --space-3: 0.75rem;  /* 12px */
+  --space-4: 1rem;     /* 16px */
+  --space-5: 1.25rem;  /* 20px */
+  --space-6: 1.5rem;   /* 24px */
+  --space-8: 2rem;     /* 32px */
+  --space-10: 2.5rem;  /* 40px */
+  --space-12: 3rem;    /* 48px */
+  --space-16: 4rem;    /* 64px */
+
+  /* Layout */
+  --header-height: 72px;
+  --container-max: 1240px;
+  --container-narrow: 860px;
+
+  /* Shadows */
+  --shadow-xs: 0 1px 2px 0 rgba(16, 24, 40, 0.05);
+  --shadow-sm: 0 1px 3px 0 rgba(16, 24, 40, 0.1), 0 1px 2px -1px rgba(16, 24, 40, 0.1);
+  --shadow-md: 0 4px 6px -1px rgba(16, 24, 40, 0.08), 0 2px 4px -2px rgba(16, 24, 40, 0.06);
+  --shadow-lg: 0 10px 15px -3px rgba(16, 24, 40, 0.08), 0 4px 6px -4px rgba(16, 24, 40, 0.04);
+  --shadow-xl: 0 20px 25px -5px rgba(16, 24, 40, 0.1), 0 8px 10px -6px rgba(16, 24, 40, 0.05);
+  --shadow-card-hover: 0 12px 20px -3px rgba(27, 67, 50, 0.12), 0 4px 6px -2px rgba(27, 67, 50, 0.06);
+
+  /* Border Radii */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+  --radius-xl: 22px;
+  --radius-full: 9999px;
+
+  /* Transitions */
+  --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-normal: 250ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-smooth: 350ms cubic-bezier(0.16, 1, 0.3, 1);
+}

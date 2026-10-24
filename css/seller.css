@@ -1,0 +1,340 @@
+/* ==========================================================================
+   LocalLoop - Seller Portal & Merchant Dashboard
+   KPI Cards, Product Management Table, Order Actions, Sales Insights
+   ========================================================================== */
+
+.seller-page {
+  padding: var(--space-8) 0 var(--space-16);
+}
+
+/* Seller Merchant Banner */
+.seller-merchant-banner {
+  background: linear-gradient(135deg, #0f281e 0%, #1b4332 100%);
+  color: var(--white);
+  border-radius: var(--radius-xl);
+  padding: var(--space-6) var(--space-8);
+  margin-bottom: var(--space-6);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+  box-shadow: var(--shadow-md);
+}
+
+.seller-profile-info {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+.seller-shop-avatar {
+  width: 56px;
+  height: 56px;
+  border-radius: var(--radius-lg);
+  background-color: var(--primary-600);
+  color: var(--white);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  font-weight: 700;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+}
+
+.seller-shop-name {
+  font-size: 1.5rem;
+  color: var(--white);
+  line-height: 1.2;
+}
+
+.seller-shop-meta {
+  font-size: var(--font-size-xs);
+  color: var(--primary-200);
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin-top: 4px;
+}
+
+.shop-switcher-select {
+  background-color: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  color: var(--white);
+  padding: 0.5rem 0.85rem;
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  cursor: pointer;
+  outline: none;
+}
+
+.shop-switcher-select option {
+  background-color: var(--neutral-900);
+  color: var(--white);
+}
+
+/* Dashboard Tabs Navigation */
+.seller-tabs-nav {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  border-bottom: 2px solid var(--neutral-200);
+  margin-bottom: var(--space-8);
+  overflow-x: auto;
+  padding-bottom: 2px;
+}
+
+.seller-tab-btn {
+  background: none;
+  border: none;
+  padding: 0.75rem 1.25rem;
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--neutral-600);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  border-bottom: 3px solid transparent;
+  margin-bottom: -2px;
+  white-space: nowrap;
+  transition: all var(--transition-fast);
+}
+
+.seller-tab-btn:hover {
+  color: var(--color-primary);
+}
+
+.seller-tab-btn.active {
+  color: var(--color-primary);
+  border-bottom-color: var(--color-primary);
+  font-weight: 700;
+}
+
+.seller-tab-badge {
+  background-color: var(--neutral-200);
+  color: var(--neutral-700);
+  padding: 0.1rem 0.45rem;
+  border-radius: var(--radius-full);
+  font-size: 11px;
+}
+
+.seller-tab-btn.active .seller-tab-badge {
+  background-color: var(--primary-100);
+  color: var(--primary-800);
+}
+
+/* --------------------------------------------------------------------------
+   KPI Metric Cards
+   -------------------------------------------------------------------------- */
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: var(--space-5);
+  margin-bottom: var(--space-8);
+}
+
+.kpi-card {
+  background-color: var(--white);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  padding: var(--space-5);
+  box-shadow: var(--shadow-xs);
+  display: flex;
+  flex-direction: column;
+}
+
+.kpi-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-3);
+}
+
+.kpi-label {
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  color: var(--neutral-600);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.kpi-icon-pill {
+  width: 34px;
+  height: 34px;
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--neutral-100);
+  color: var(--neutral-700);
+}
+
+.kpi-icon-pill.success { background-color: var(--primary-50); color: var(--color-primary); }
+.kpi-icon-pill.warning { background-color: var(--accent-100); color: var(--accent-700); }
+.kpi-icon-pill.danger  { background-color: var(--danger-bg); color: var(--danger-text); }
+.kpi-icon-pill.info    { background-color: var(--info-bg); color: var(--info-text); }
+
+.kpi-value {
+  font-family: var(--font-family-display);
+  font-size: 1.85rem;
+  font-weight: 700;
+  color: var(--neutral-900);
+  line-height: 1.1;
+  margin-bottom: 4px;
+}
+
+.kpi-subtitle {
+  font-size: var(--font-size-xs);
+  color: var(--neutral-500);
+}
+
+/* --------------------------------------------------------------------------
+   Seller Data Tables (Products & Orders)
+   -------------------------------------------------------------------------- */
+.table-panel {
+  background-color: var(--white);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+  margin-bottom: var(--space-8);
+}
+
+.table-toolbar {
+  padding: var(--space-4) var(--space-6);
+  border-bottom: 1px solid var(--color-border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+}
+
+.data-table-wrapper {
+  overflow-x: auto;
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+.data-table th {
+  background-color: var(--neutral-50);
+  padding: var(--space-3) var(--space-5);
+  font-size: var(--font-size-xs);
+  font-weight: 700;
+  color: var(--neutral-700);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.data-table td {
+  padding: var(--space-4) var(--space-5);
+  border-bottom: 1px solid var(--color-border-subtle);
+  font-size: var(--font-size-sm);
+  color: var(--neutral-800);
+  vertical-align: middle;
+}
+
+.data-table tbody tr:hover {
+  background-color: var(--neutral-50);
+}
+
+.table-product-thumb {
+  width: 48px;
+  height: 48px;
+  border-radius: var(--radius-md);
+  object-fit: cover;
+  background-color: var(--neutral-100);
+}
+
+.table-actions-cell {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+/* --------------------------------------------------------------------------
+   Order State Transition Controls
+   -------------------------------------------------------------------------- */
+.order-action-btn-group {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+/* --------------------------------------------------------------------------
+   Sales Insights & Analytics UI
+   -------------------------------------------------------------------------- */
+.analytics-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-6);
+  margin-bottom: var(--space-8);
+}
+
+.analytics-card {
+  background-color: var(--white);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  padding: var(--space-6);
+  box-shadow: var(--shadow-sm);
+}
+
+.analytics-card-title {
+  font-size: 1.15rem;
+  color: var(--neutral-900);
+  margin-bottom: var(--space-4);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* CSS Bar Chart */
+.bar-chart-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.bar-chart-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.bar-chart-meta {
+  display: flex;
+  justify-content: space-between;
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  color: var(--neutral-700);
+}
+
+.bar-chart-track {
+  width: 100%;
+  height: 10px;
+  background-color: var(--neutral-200);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+}
+
+.bar-chart-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--primary-500) 0%, var(--primary-700) 100%);
+  border-radius: var(--radius-full);
+  transition: width 600ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Responsive Table Adjustments */
+@media (max-width: 860px) {
+  .analytics-grid {
+    grid-template-columns: 1fr;
+  }
+}
