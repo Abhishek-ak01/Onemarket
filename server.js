@@ -19,6 +19,8 @@ const productRoutes = require('./routes/products');
 const cartRoutes = require('./routes/cart');
 const orderRoutes = require('./routes/orders');
 const reviewRoutes = require('./routes/reviews');
+const adminRoutes = require('./routes/admin');
+const paymentRoutes = require('./routes/payments');
 
 // Middleware
 const { notFoundHandler, errorHandler } = require('./middleware/error-handler');
@@ -48,6 +50,8 @@ app.use('/api/products', productRoutes);
 app.use('/api/cart', cartRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/reviews', reviewRoutes);
+app.use('/api/admin', adminRoutes);
+app.use('/api/payments', paymentRoutes);
 
 // Catch-all 404 handler for unknown /api/* routes
 app.use(notFoundHandler);

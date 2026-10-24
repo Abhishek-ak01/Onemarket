@@ -920,8 +920,8 @@ const Store = (() => {
       const customer = orderPayload.customer;
       const items = orderPayload.items;
       const notes = orderPayload.notes || '';
-      const paymentMethod = orderPayload.paymentMethod || 'Cash on Delivery (Demo)';
-      const paymentStatus = orderPayload.paymentStatus || (paymentMethod.includes('UPI') || paymentMethod.includes('Card') ? 'Demo Payment Successful' : 'Pending');
+      const paymentMethod = orderPayload.paymentMethod || 'Cash on Delivery';
+      const paymentStatus = orderPayload.paymentStatus || 'Pending';
 
       if (!items || items.length === 0) {
         return { success: false, message: 'Cart is empty.' };
@@ -1058,6 +1058,21 @@ const Store = (() => {
       }
 
       return { success: true, order: newOrder };
+    },
+
+    updateOrderPaymentStatus(orderId, paymentStatus, paymentId = null) {
+      const order = state.orders.find(o => o.id === orderId);
+      if (order) {
+        order.paymentStatus = paymentStatus;
+        if (paymentStatus === 'Paid') {
+          order.status = 'Confirmed';
+        }
+        if (paymentId) {
+          order.gatewayPaymentId = paymentId;
+        }
+        saveOrders();
+        emit('orders:changed', state.orders);
+      }
     },
 
     /**

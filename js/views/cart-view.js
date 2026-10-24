@@ -823,6 +823,15 @@ const CartView = {
         confirmBtn.innerHTML = 'Placing Order with Local Merchant...';
 
         const cartSummary = Store.getCartSummary();
+        const availableTokens = Store.getRewardTokens();
+        const maxRedeemableTokens = Math.min(availableTokens, Math.floor(cartSummary.subtotal * 0.5));
+        const tokenDiscount = Math.min(this.tokensToRedeem, maxRedeemableTokens) * 1.0;
+        const taxableSubtotal = Math.max(0, cartSummary.subtotal - tokenDiscount);
+        const taxes = Math.round(taxableSubtotal * 0.05 * 100) / 100;
+        const calculatedGrandTotal = Math.max(0, Math.round((taxableSubtotal + cartSummary.deliveryFee + taxes) * 100) / 100);
+
+        const isUpi = this.checkoutData.paymentMethod === 'UPI Payment';
+
         const res = Store.createOrder({
           customer: {
             name: this.checkoutData.name,
@@ -833,13 +842,39 @@ const CartView = {
           },
           items: cartSummary.items,
           paymentMethod: this.checkoutData.paymentMethod,
-          paymentStatus: this.checkoutData.paymentStatus,
+          paymentStatus: 'Pending',
           tokensToRedeem: this.tokensToRedeem
         });
 
         if (res.success) {
           const orderId = res.order.id;
           const tokensEarned = res.order.tokensEarned || Math.floor(cartSummary.subtotal / 100);
+
+          if (isUpi) {
+            // Initiate official UPI payment with backend
+            confirmBtn.innerHTML = 'Generating UPI Payment QR...';
+            try {
+              const payReq = await fetch('/api/payments/create-order', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ orderId, method: 'UPI' })
+              });
+              const payData = await payReq.json();
+              
+              if (payData.success) {
+                this.currentStep = 1;
+                this.tokensToRedeem = 0;
+                this.openUpiModal(orderId, calculatedGrandTotal, payData);
+                return;
+              } else {
+                Utils.showToast(payData.message || 'Payment initiation failed', 'error');
+              }
+            } catch (err) {
+              console.error('Payment gateway error:', err);
+            }
+          }
+
+          // Default / COD order completion
           this.currentStep = 1;
           this.tokensToRedeem = 0;
           Utils.showToast(`Order #${orderId} placed successfully! You earned ${tokensEarned} OneMarket tokens!`, 'success');
@@ -885,5 +920,190 @@ const CartView = {
         App.renderCurrentRoute();
       });
     });
+  },
+
+  openUpiModal(orderId, amount, upiData) {
+    const modalId = 'modal-upi-gateway';
+    let existingModal = document.getElementById(modalId);
+    if (existingModal) existingModal.remove();
+
+    const upiUri = upiData.upiUri || `upi://pay?pa=onemarket.hubballi@icici&pn=OneMarket%20Hubballi&am=${amount.toFixed(2)}&cu=INR&tr=${upiData.gatewayOrderId}&tn=Order%20${orderId}`;
+    const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(upiUri)}`;
+
+    const modalHtml = `
+      <div id="${modalId}" class="modal-backdrop active" style="display: flex; align-items: center; justify-content: center; z-index: 9999; background: rgba(0,0,0,0.7); padding: 16px;">
+        <div class="modal-dialog" style="max-width: 480px; width: 100%; max-height: 90vh; overflow-y: auto; background: #ffffff; border-radius: 20px; box-shadow: 0 25px 60px -12px rgba(0,0,0,0.5); border: 1px solid #e2e8f0; animation: modalSlideUp 0.25s ease;">
+          
+          <!-- Gateway Header -->
+          <div style="background: linear-gradient(135deg, #064e3b 0%, #047857 100%); color: #ffffff; padding: 20px 24px; border-radius: 20px 20px 0 0; text-align: center; position: relative;">
+            <div style="display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 4px;">
+              <span style="font-size: 1.4rem;">🇮🇳</span>
+              <h3 style="font-size: 1.25rem; font-weight: 800; margin: 0; color: #ffffff;">OneMarket UPI Gateway</h3>
+            </div>
+            <div style="font-size: 0.78rem; color: #a7f3d0; letter-spacing: 0.04em;">
+              OFFICIAL INDIAN PAYMENT FLOW • RAZORPAY UPI CHECKOUT
+            </div>
+            <div style="margin-top: 10px; background: rgba(255,255,255,0.15); border-radius: 10px; padding: 6px 14px; display: inline-block;">
+              <span style="font-size: 0.85rem; font-weight: 600;">Amount Due: </span>
+              <span style="font-size: 1.25rem; font-weight: 900; color: #ffffff;">₹${amount.toFixed(2)}</span>
+            </div>
+          </div>
+
+          <!-- Body -->
+          <div style="padding: 20px 24px;">
+            
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; font-size: 0.82rem; color: #64748b; background: #f8fafc; padding: 8px 12px; border-radius: 8px; border: 1px solid #e2e8f0;">
+              <div>Order: <strong>#${orderId}</strong></div>
+              <div id="upi-countdown" style="font-weight: 700; color: #b45309;">Expires in 05:00</div>
+            </div>
+
+            <!-- Desktop View: Scannable QR -->
+            <div id="upi-desktop-view" style="text-align: center; margin-bottom: 18px;">
+              <div style="background: #ffffff; border: 2px dashed #10b981; border-radius: 16px; padding: 14px; display: inline-block; box-shadow: 0 4px 12px rgba(16,185,129,0.1);">
+                <img src="${qrUrl}" alt="UPI QR Code" style="width: 190px; height: 190px; display: block; border-radius: 8px;" />
+              </div>
+              <p style="font-size: 0.82rem; color: #475569; margin: 10px 0 0; line-height: 1.4;">
+                Scan with any UPI app: <strong>PhonePe, GPay, Paytm, BHIM, or CRED</strong>
+              </p>
+              <div style="font-size: 0.75rem; color: #64748b; margin-top: 4px;">
+                Merchant VPA: <code style="background: #f1f5f9; padding: 2px 6px; border-radius: 4px;">${upiData.upiVpa || 'onemarket.hubballi@icici'}</code>
+              </div>
+            </div>
+
+            <!-- Mobile App-Switch Buttons -->
+            <div id="upi-mobile-actions" style="margin-bottom: 18px;">
+              <div style="font-size: 0.78rem; font-weight: 700; color: #475569; text-transform: uppercase; margin-bottom: 8px; text-align: center;">
+                Fast Mobile Checkout
+              </div>
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                <a href="${upiData.mobileDeepLinks?.phonepe || upiUri}" class="btn btn-sm" style="background: #5f259f; color: #ffffff; font-weight: 700; text-align: center; border-radius: 8px; padding: 8px 10px; text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 6px;">
+                  🟣 Pay with PhonePe
+                </a>
+                <a href="${upiData.mobileDeepLinks?.gpay || upiUri}" class="btn btn-sm" style="background: #1a73e8; color: #ffffff; font-weight: 700; text-align: center; border-radius: 8px; padding: 8px 10px; text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 6px;">
+                  🔵 Pay with GPay
+                </a>
+                <a href="${upiData.mobileDeepLinks?.paytm || upiUri}" class="btn btn-sm" style="background: #00b9f1; color: #ffffff; font-weight: 700; text-align: center; border-radius: 8px; padding: 8px 10px; text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 6px;">
+                  🔷 Pay with Paytm
+                </a>
+                <a href="${upiUri}" class="btn btn-sm btn-outline" style="font-weight: 700; text-align: center; border-radius: 8px; padding: 8px 10px; text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 6px;">
+                  📲 Other UPI Apps
+                </a>
+              </div>
+            </div>
+
+            <!-- Live Verification Status Bar -->
+            <div id="upi-status-indicator" style="background: #ecfdf5; border: 1px solid #a7f3d0; border-radius: 10px; padding: 10px 14px; text-align: center; font-size: 0.85rem; color: #065f46; margin-bottom: 16px; display: flex; align-items: center; justify-content: center; gap: 8px;">
+              <span class="spinner" style="width: 14px; height: 14px; border: 2px solid #059669; border-top-color: transparent; border-radius: 50%; display: inline-block; animation: spin 1s linear infinite;"></span>
+              <span>Awaiting server payment verification...</span>
+            </div>
+
+            <!-- Verification Action / Sandbox Approval -->
+            <div style="display: flex; flex-direction: column; gap: 8px;">
+              <button type="button" class="btn btn-primary btn-block btn-lg" id="btn-verify-upi-status" style="background: #059669; font-weight: 700; padding: 12px;">
+                ✅ Verify Payment (Complete Order)
+              </button>
+              <button type="button" class="btn btn-outline btn-block btn-sm" id="btn-cancel-upi-modal" style="color: #64748b;">
+                Cancel & Return to Orders
+              </button>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    `;
+
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+
+    // Setup Countdown (5 mins)
+    let timeLeft = 300;
+    const countdownEl = document.getElementById('upi-countdown');
+    const timerInterval = setInterval(() => {
+      timeLeft--;
+      if (timeLeft <= 0) {
+        clearInterval(timerInterval);
+        if (countdownEl) countdownEl.textContent = 'Expired';
+        return;
+      }
+      const mins = Math.floor(timeLeft / 60).toString().padStart(2, '0');
+      const secs = (timeLeft % 60).toString().padStart(2, '0');
+      if (countdownEl) countdownEl.textContent = `Expires in ${mins}:${secs}`;
+    }, 1000);
+
+    // Setup Polling every 3.5s
+    const pollInterval = setInterval(async () => {
+      try {
+        const res = await fetch(`/api/payments/status/${orderId}`);
+        const data = await res.json();
+        if (data.success && data.paymentStatus === 'Paid') {
+          clearInterval(pollInterval);
+          clearInterval(timerInterval);
+          handlePaymentSuccess();
+        }
+      } catch (e) {}
+    }, 3500);
+
+    const handlePaymentSuccess = () => {
+      Store.updateOrderPaymentStatus(orderId, 'Paid');
+      const indicator = document.getElementById('upi-status-indicator');
+      if (indicator) {
+        indicator.innerHTML = '🎉 <strong>Payment Verified! Order Confirmed.</strong>';
+        indicator.style.background = '#dcfce7';
+        indicator.style.color = '#15803d';
+      }
+      setTimeout(() => {
+        const modal = document.getElementById(modalId);
+        if (modal) modal.remove();
+        Utils.showToast(`Payment verified! Order #${orderId} is confirmed.`, 'success');
+        window.location.hash = `#orders?just_ordered=${orderId}`;
+      }, 1000);
+    };
+
+    // Manual / Sandbox Verification Trigger
+    const verifyBtn = document.getElementById('btn-verify-upi-status');
+    if (verifyBtn) {
+      verifyBtn.addEventListener('click', async () => {
+        verifyBtn.disabled = true;
+        verifyBtn.textContent = 'Verifying with Gateway...';
+        try {
+          const res = await fetch('/api/payments/verify', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              orderId,
+              gatewayOrderId: upiData.gatewayOrderId,
+              gatewayPaymentId: 'pay_' + Date.now(),
+              gatewaySignature: 'sandbox_test_sig'
+            })
+          });
+          const data = await res.json();
+          if (data.success) {
+            clearInterval(pollInterval);
+            clearInterval(timerInterval);
+            handlePaymentSuccess();
+          } else {
+            Utils.showToast(data.message || 'Payment not yet received.', 'info');
+            verifyBtn.disabled = false;
+            verifyBtn.textContent = '✅ Verify Payment (Complete Order)';
+          }
+        } catch (err) {
+          Utils.showToast('Verification check error.', 'error');
+          verifyBtn.disabled = false;
+          verifyBtn.textContent = '✅ Verify Payment (Complete Order)';
+        }
+      });
+    }
+
+    // Cancel modal button
+    const cancelBtn = document.getElementById('btn-cancel-upi-modal');
+    if (cancelBtn) {
+      cancelBtn.addEventListener('click', () => {
+        clearInterval(pollInterval);
+        clearInterval(timerInterval);
+        const modal = document.getElementById(modalId);
+        if (modal) modal.remove();
+        Utils.showToast(`Order #${orderId} recorded with Pending payment.`, 'info');
+        window.location.hash = `#orders?just_ordered=${orderId}`;
+      });
+    }
   }
 };

@@ -77,6 +77,13 @@ const Navbar = {
                     My Portal
                   </a>
                 </li>
+                ${currentUser?.role === 'admin' ? `
+                  <li>
+                    <a href="#admin" class="nav-pill-item ${activeRoute === 'admin' ? 'active' : ''}" style="color: #065f46; font-weight: 700;">
+                      🛡️ Admin
+                    </a>
+                  </li>
+                ` : ''}
               </ul>
             </nav>
 
@@ -167,6 +174,11 @@ const Navbar = {
               <a href="#portal" class="mobile-link ${isPortalActive ? 'active' : ''}">
                 ${Utils.icons.user || '👤'} My Portal
               </a>
+              ${currentUser?.role === 'admin' ? `
+                <a href="#admin" class="mobile-link ${activeRoute === 'admin' ? 'active' : ''}" style="color: #065f46; font-weight: 700;">
+                  🛡️ Admin Operations
+                </a>
+              ` : ''}
               <div style="margin-top: var(--space-4); padding-top: var(--space-4); border-top: 1px solid var(--neutral-200);">
                 ${currentUser ? `
                   <div style="margin-bottom: var(--space-3); font-size: 0.85rem; color: var(--neutral-700);">

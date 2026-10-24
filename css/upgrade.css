@@ -971,10 +971,81 @@ textarea.form-control {
   margin-top: 16px;
 }
 
+@media (max-width: 768px) {
+  .checkout-stepper {
+    padding: 12px 14px;
+    gap: 6px;
+  }
+
+  .step-node {
+    gap: 6px;
+  }
+
+  .step-num {
+    width: 28px;
+    height: 28px;
+    font-size: 0.75rem;
+  }
+
+  .step-title {
+    font-size: 0.75rem;
+  }
+
+  .order-tracking-card {
+    padding: 16px 12px;
+  }
+}
+
 @media (max-width: 640px) {
   .checkout-grid-2col,
   .checkout-grid-3col {
     grid-template-columns: 1fr !important;
+  }
+
+  .checkout-stepper {
+    justify-content: flex-start;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 8px;
+  }
+
+  .checkout-stepper::-webkit-scrollbar {
+    height: 4px;
+  }
+
+  .checkout-stepper::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 4px;
+  }
+
+  .auth-modal-dialog {
+    width: 95%;
+    max-height: 92vh;
+    border-radius: 16px;
+  }
+
+  .auth-body {
+    padding: 14px 16px 20px;
+  }
+}
+
+@media (max-width: 400px) {
+  .step-title {
+    display: none;
+  }
+
+  .step-node.active .step-title {
+    display: inline-block;
+  }
+
+  .step-divider {
+    min-width: 14px;
+    margin: 0 4px;
+  }
+
+  .payment-option-card {
+    padding: 12px 10px;
+    gap: 8px;
   }
 }
 

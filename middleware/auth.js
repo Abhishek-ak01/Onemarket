@@ -105,5 +105,6 @@ module.exports = {
   requireAuth,
   requireRole,
   requireCustomer: [requireAuth, requireRole('customer')],
-  requireSeller: [requireAuth, requireRole('seller')]
+  requireSeller: [requireAuth, requireRole('seller')],
+  requireAdmin: [requireAuth, requireRole('admin')]
 };

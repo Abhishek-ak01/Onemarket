@@ -15,6 +15,7 @@ const Router = {
     'orders': OrdersView,
     'seller': SellerView,
     'portal': PortalView,
+    'admin': AdminView,
     'store': StorefrontView,
     'shop': StorefrontView,
     'about': AboutView
@@ -100,6 +101,11 @@ const Router = {
       case 'portal':
         viewHtml = PortalView.render(queryParams);
         initCallback = () => PortalView.initListeners();
+        break;
+
+      case 'admin':
+        viewHtml = AdminView.render(queryParams);
+        initCallback = () => AdminView.initListeners();
         break;
 
       case 'store':

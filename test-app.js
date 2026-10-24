@@ -66,6 +66,7 @@ const files = [
   'js/views/storefront-view.js',
   'js/views/about-view.js',
   'js/views/portal-view.js',
+  'js/views/admin-view.js',
   'js/router.js'
 ];
 
