@@ -22,9 +22,10 @@ const Router = {
   },
 
   parseHash() {
-    const rawHash = window.location.hash.slice(1) || 'home';
+    let rawHash = (window.location.hash || '').replace(/^#\/?/, '').trim();
+    if (!rawHash) rawHash = 'home';
     const [pathPart, queryPart] = rawHash.split('?');
-    const pathSegments = pathPart.split('/');
+    const pathSegments = (pathPart || '').split('/').filter(Boolean);
 
     const routeName = pathSegments[0] || 'home';
     const param = pathSegments[1] || null;
