@@ -1,4 +1,4 @@
-# LocalLoop — Your City. Your Shops. One Local Marketplace
+#onemarket — Your City. Your Shops. One Local Marketplace
 
 > **CODEFEST 2026 Hackathon Entry**  
 > **Category:** Full-Stack Web Applications × E-Commerce  
